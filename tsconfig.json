@@ -1,0 +1,29 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [
+    { "path": "packages/shared" },
+    { "path": "packages/ast" },
+    { "path": "packages/core" },
+    { "path": "packages/chunking" },
+    { "path": "packages/pdf" },
+    { "path": "packages/docx" },
+    { "path": "packages/pptx" },
+    { "path": "packages/xlsx" },
+    { "path": "packages/html" },
+    { "path": "packages/csv" },
+    { "path": "packages/json" },
+    { "path": "packages/xml" },
+    { "path": "packages/image-ocr" },
+    { "path": "packages/audio" },
+    { "path": "packages/epub" },
+    { "path": "packages/archive" },
+    { "path": "packages/react" },
+    { "path": "packages/next" },
+    { "path": "packages/cli" },
+    { "path": "packages/api" }
+  ],
+  "files": []
+}
