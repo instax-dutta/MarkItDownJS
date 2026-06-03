@@ -7,6 +7,8 @@ import type {
 } from "@markitdownjs/shared";
 import {
   createNode,
+  parseXML,
+  serializeXML,
   type AnyNode,
   type HeadingNode,
   type CodeNode,
@@ -45,7 +47,7 @@ export class XmlConverter implements Converter {
     const text = await this.readString(input);
     const inputSize = new TextEncoder().encode(text).byteLength;
 
-    const document = new DOMParser().parseFromString(text, "application/xml");
+    const document = await parseXML(text);
     const parseError = document.querySelector("parsererror");
     if (parseError) {
       throw new Error(`XML parse error: ${parseError.textContent ?? "unknown error"}`);
@@ -97,7 +99,7 @@ export class XmlConverter implements Converter {
       }
     }
 
-    const serialized = new XMLSerializer().serializeToString(document);
+    const serialized = serializeXML(document);
     const prettyXml = this.prettifyXml(serialized);
 
     children.push(

@@ -8,6 +8,7 @@ import type {
 } from "@markitdownjs/shared";
 import {
   createNode,
+  parseXML,
   DocumentNode,
   HeadingNode,
   ParagraphNode,
@@ -92,8 +93,7 @@ export class DocxConverter implements Converter {
       throw new Error("Invalid DOCX: word/document.xml not found");
     }
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(documentXml, "application/xml");
+    const doc = await parseXML(documentXml);
     const body = doc.getElementsByTagName("w:body")[0];
     if (!body) {
       throw new Error("Invalid DOCX: no body element found");
@@ -167,8 +167,7 @@ export class DocxConverter implements Converter {
       ?.async("string");
     if (!relsXml) return map;
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(relsXml, "application/xml");
+    const doc = await parseXML(relsXml);
     const rels = doc.getElementsByTagName("Relationship");
     for (let i = 0; i < rels.length; i++) {
       const rel = rels.item(i);
@@ -196,8 +195,7 @@ export class DocxConverter implements Converter {
     if (!coreXml) return metadata;
 
     try {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(coreXml, "application/xml");
+      const doc = await parseXML(coreXml);
 
       const title = doc.getElementsByTagName("dc:title")[0];
       if (title) metadata.title = title.textContent ?? undefined;

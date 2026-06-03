@@ -11,6 +11,13 @@ export default defineConfig({
       '@markitdownjs/csv': path.resolve(__dirname, 'packages/csv/src/index.ts'),
       '@markitdownjs/json': path.resolve(__dirname, 'packages/json/src/index.ts'),
       '@markitdownjs/html': path.resolve(__dirname, 'packages/html/src/index.ts'),
+      '@markitdownjs/xml': path.resolve(__dirname, 'packages/xml/src/index.ts'),
+      '@markitdownjs/audio': path.resolve(__dirname, 'packages/audio/src/index.ts'),
+      '@markitdownjs/archive': path.resolve(__dirname, 'packages/archive/src/index.ts'),
+      '@markitdownjs/pdf': path.resolve(__dirname, 'packages/pdf/src/index.ts'),
+      '@markitdownjs/docx': path.resolve(__dirname, 'packages/docx/src/index.ts'),
+      '@markitdownjs/pptx': path.resolve(__dirname, 'packages/pptx/src/index.ts'),
+      '@markitdownjs/xlsx': path.resolve(__dirname, 'packages/xlsx/src/index.ts'),
     },
   },
   test: {

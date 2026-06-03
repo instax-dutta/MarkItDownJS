@@ -8,6 +8,7 @@ import type {
 } from "@markitdownjs/shared";
 import {
   createNode,
+  parseXML,
   DocumentNode,
   HeadingNode,
   TextNode,
@@ -233,8 +234,7 @@ export class XlsxConverter implements Converter {
     const xml = await zip.file("xl/sharedStrings.xml")?.async("string");
     if (!xml) return map;
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, "application/xml");
+    const doc = await parseXML(xml);
     const siElements = doc.getElementsByTagName("si");
 
     for (let i = 0; i < siElements.length; i++) {
@@ -263,8 +263,7 @@ export class XlsxConverter implements Converter {
     const xml = await zip.file("xl/workbook.xml")?.async("string");
     if (!xml) return sheets;
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, "application/xml");
+    const doc = await parseXML(xml);
     const sheetEls = doc.getElementsByTagName("sheet");
 
     for (let i = 0; i < sheetEls.length; i++) {
@@ -298,8 +297,7 @@ export class XlsxConverter implements Converter {
     const xml = await zip.file(sheetPath)?.async("string");
     if (!xml) return { cells, merges };
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, "application/xml");
+    const doc = await parseXML(xml);
 
     // Parse merge cells.
     const mergeCells = doc.getElementsByTagName("mergeCell");

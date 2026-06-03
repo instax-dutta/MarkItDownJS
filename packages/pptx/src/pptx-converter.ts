@@ -8,6 +8,7 @@ import type {
 } from "@markitdownjs/shared";
 import {
   createNode,
+  parseXML,
   DocumentNode,
   HeadingNode,
   ParagraphNode,
@@ -81,7 +82,6 @@ export class PptxConverter implements Converter {
 
     // Parse slide ordering from presentation.xml.
     const slideOrder = await this.parseSlideOrder(zip);
-    const parser = new DOMParser();
 
     const slideNodes: AnyNode[] = [];
     const headings: HeadingInfo[] = [];
@@ -94,7 +94,7 @@ export class PptxConverter implements Converter {
       if (!slideXml) continue;
 
       slideCount++;
-      const slideDoc = parser.parseFromString(slideXml, "application/xml");
+      const slideDoc = await parseXML(slideXml);
 
       // Detect the title shape (name contains "Title").
       const title = this.detectTitleShape(slideDoc);
@@ -147,7 +147,7 @@ export class PptxConverter implements Converter {
         .replace(".xml", ".xml");
       const notesXml = notesPath ? await zip.file(notesPath)?.async("string") : undefined;
       if (notesXml) {
-        const notesDoc = parser.parseFromString(notesXml, "application/xml");
+        const notesDoc = await parseXML(notesXml);
         const notesTexts = this.extractAllText(notesDoc);
         if (notesTexts.length > 0) {
           sectionChildren.push(
@@ -256,8 +256,7 @@ export class PptxConverter implements Converter {
       return order;
     }
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(presXml, "application/xml");
+    const doc = await parseXML(presXml);
     const sldIdLst = doc.getElementsByTagName("p:sldIdLst")[0];
     if (!sldIdLst) {
       zip.forEach((path: string) => {
@@ -283,7 +282,7 @@ export class PptxConverter implements Converter {
       ?.async("string");
     if (!relsXml) return order;
 
-    const relsDoc = parser.parseFromString(relsXml, "application/xml");
+    const relsDoc = await parseXML(relsXml);
     const rels = relsDoc.getElementsByTagName("Relationship");
     const ridToTarget = new Map<string, string>();
     for (let i = 0; i < rels.length; i++) {
