@@ -1,6 +1,6 @@
 {
   "name": "@markitdownjs/docx",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DOCX converter for MarkItDownJS",
   "license": "MIT",
   "type": "module",
