@@ -12,14 +12,33 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ci": "vitest run --coverage",
-    "lint": "turbo run lint",
+    "lint": "eslint packages/*/src --ext .ts,.tsx",
+    "lint:fix": "eslint packages/*/src --ext .ts,.tsx --fix",
+    "format": "prettier --write \"packages/*/src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"packages/*/src/**/*.{ts,tsx}\"",
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean",
     "release": "changeset publish",
-    "version": "changeset version"
+    "version": "changeset version",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "packages/*/src/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
+    "@eslint/js": "^10.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.60.1",
+    "@typescript-eslint/parser": "^8.60.1",
     "@vitest/coverage-v8": "^4.1.8",
+    "eslint": "^10.4.1",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "prettier": "^3.8.3",
     "vite": "^8.0.16",
     "vitest": "^4.1.8"
   }

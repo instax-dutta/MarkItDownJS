@@ -1,11 +1,21 @@
 {
   "name": "@markitdownjs/cli",
   "version": "0.1.0",
+  "description": "CLI tool for MarkItDownJS document conversion",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
-  "bin": { "markitdownjs": "./dist/index.js" },
-  "exports": { ".": { "import": "./dist/index.js" } },
-  "files": ["dist"],
+  "bin": {
+    "markitdownjs": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "dev": "tsc --watch --project tsconfig.json",

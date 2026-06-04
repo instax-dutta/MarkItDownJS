@@ -1,6 +1,8 @@
 {
   "name": "@markitdownjs/shared",
   "version": "0.1.0",
+  "description": "Shared types, AST nodes, and utilities for MarkItDownJS",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

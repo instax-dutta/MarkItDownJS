@@ -1,6 +1,8 @@
 {
   "name": "@markitdownjs/pptx",
   "version": "0.1.0",
+  "description": "PowerPoint (PPTX) converter for MarkItDownJS",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -11,7 +13,9 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "dev": "tsc --watch --project tsconfig.json",

@@ -1,6 +1,8 @@
 {
   "name": "@markitdownjs/chunking",
   "version": "0.1.0",
+  "description": "AI-ready document chunking strategies for MarkItDownJS",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

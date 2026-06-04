@@ -1,13 +1,31 @@
 {
   "name": "@markitdownjs/ast",
   "version": "0.1.0",
+  "description": "Unified AST types and renderers for MarkItDownJS",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" } },
-  "files": ["dist"],
-  "scripts": { "build": "tsc --project tsconfig.json", "dev": "tsc --watch --project tsconfig.json", "typecheck": "tsc --noEmit", "clean": "rm -rf dist tsconfig.tsbuildinfo" },
-  "dependencies": { "@markitdownjs/shared": "workspace:*" },
-  "devDependencies": { "typescript": "^5.5.0" }
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "tsc --watch --project tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@markitdownjs/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
 }
