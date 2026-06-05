@@ -3,7 +3,7 @@
   "private": true,
   "description": "Universal document-to-Markdown conversion engine",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "packageManager": "pnpm@9.15.4",
   "scripts": {
