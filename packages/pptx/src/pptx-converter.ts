@@ -46,10 +46,7 @@ export class PptxConverter implements Converter {
       }
     }
     if (input.data instanceof Uint8Array || input.data instanceof ArrayBuffer) {
-      const bytes =
-        input.data instanceof Uint8Array
-          ? input.data
-          : new Uint8Array(input.data);
+      const bytes = input.data instanceof Uint8Array ? input.data : new Uint8Array(input.data);
       if (
         bytes.length >= 4 &&
         bytes[0] === 0x50 &&
@@ -113,9 +110,7 @@ export class PptxConverter implements Converter {
       const headingNode = createNode<HeadingNode>({
         type: "heading",
         level: 2,
-        children: [
-          createNode<TextNode>({ type: "text", value: titleText }),
-        ],
+        children: [createNode<TextNode>({ type: "text", value: titleText })],
       });
       sectionChildren.push(headingNode);
       headings.push({ level: 2, text: titleText });
@@ -128,9 +123,7 @@ export class PptxConverter implements Converter {
         sectionChildren.push(
           createNode<ParagraphNode>({
             type: "paragraph",
-            children: [
-              createNode<TextNode>({ type: "text", value: trimmed }),
-            ],
+            children: [createNode<TextNode>({ type: "text", value: trimmed })],
           })
         );
       }
@@ -170,9 +163,7 @@ export class PptxConverter implements Converter {
             sectionChildren.push(
               createNode<ParagraphNode>({
                 type: "paragraph",
-                children: [
-                  createNode<TextNode>({ type: "text", value: noteText }),
-                ],
+                children: [createNode<TextNode>({ type: "text", value: noteText })],
               })
             );
           }
@@ -210,8 +201,7 @@ export class PptxConverter implements Converter {
       markdown,
       metadata: {
         pageCount: slideCount,
-        format:
-          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        format: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
         source: "jszip",
       },
       assets: [],
@@ -242,9 +232,7 @@ export class PptxConverter implements Converter {
     zip: any // eslint-disable-line @typescript-eslint/no-explicit-any
   ): Promise<string[]> {
     const order: string[] = [];
-    const presXml = await zip
-      .file("ppt/presentation.xml")
-      ?.async("string");
+    const presXml = await zip.file("ppt/presentation.xml")?.async("string");
     if (!presXml) {
       // Fallback: collect slide files and sort.
       zip.forEach((path: string) => {
@@ -277,9 +265,7 @@ export class PptxConverter implements Converter {
     }
 
     // Resolve rIds through presentation.xml.rels.
-    const relsXml = await zip
-      .file("ppt/_rels/presentation.xml.rels")
-      ?.async("string");
+    const relsXml = await zip.file("ppt/_rels/presentation.xml.rels")?.async("string");
     if (!relsXml) return order;
 
     const relsDoc = await parseXML(relsXml);
@@ -350,8 +336,7 @@ export class PptxConverter implements Converter {
 
       // Process paragraphs within shapes (txBody > bodyPr > lstStyle + p).
       const txBody =
-        shape.getElementsByTagName("p:txBody")[0] ??
-        shape.getElementsByTagName("a:txBody")[0];
+        shape.getElementsByTagName("p:txBody")[0] ?? shape.getElementsByTagName("a:txBody")[0];
       if (!txBody) continue;
 
       const paragraphs = txBody.getElementsByTagName("a:p");
@@ -468,9 +453,7 @@ export class PptxConverter implements Converter {
           cells.push(
             createNode<TableCellNode>({
               type: "table-cell",
-              children: [
-                createNode<TextNode>({ type: "text", value: cellText }),
-              ],
+              children: [createNode<TextNode>({ type: "text", value: cellText })],
               ...(colspan !== undefined ? { colspan } : {}),
             })
           );
@@ -531,9 +514,7 @@ export class PptxConverter implements Converter {
   private getNodeText(node: AnyNode): string {
     if (node.type === "text") return (node as TextNode).value;
     if ("children" in node && node.children) {
-      return (node.children as AnyNode[])
-        .map((c) => this.getNodeText(c))
-        .join("");
+      return (node.children as AnyNode[]).map((c) => this.getNodeText(c)).join("");
     }
     return "";
   }
@@ -543,9 +524,7 @@ export class PptxConverter implements Converter {
    * @param data - The input data in any supported format.
    * @returns The data as a Uint8Array.
    */
-  private async toByteArray(
-    data: Uint8Array | ArrayBuffer | Blob | string
-  ): Promise<Uint8Array> {
+  private async toByteArray(data: Uint8Array | ArrayBuffer | Blob | string): Promise<Uint8Array> {
     if (data instanceof Uint8Array) return data;
     if (data instanceof ArrayBuffer) return new Uint8Array(data);
     if (data instanceof Blob) return new Uint8Array(await data.arrayBuffer());

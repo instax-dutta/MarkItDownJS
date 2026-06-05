@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import type { ConversionResult, ConversionOptions, ProgressInfo } from '@markitdownjs/shared';
+import { useState, useCallback, useRef, useEffect } from "react";
+import type { ConversionResult, ConversionOptions, ProgressInfo } from "@markitdownjs/shared";
 
 interface UseDocumentParserReturn {
   convert: (file: File, options?: ConversionOptions) => Promise<ConversionResult>;
@@ -25,7 +25,7 @@ export function useDocumentParser(): UseDocumentParserReturn {
     setProgress(0);
     setResult(null);
     try {
-      const { MarkItDown } = await import('@markitdownjs/core');
+      const { MarkItDown } = await import("@markitdownjs/core");
       const parser = new MarkItDown();
       const conversionResult = await parser.convert({
         data: file,
@@ -82,7 +82,7 @@ export function useMarkdownConversion(): UseMarkdownConversionReturn {
     setIsConverting(true);
     setError(null);
     try {
-      const { MarkItDown } = await import('@markitdownjs/core');
+      const { MarkItDown } = await import("@markitdownjs/core");
       const parser = new MarkItDown();
       const md = await parser.convertToMarkdown(file);
       setMarkdown(md);
@@ -100,7 +100,7 @@ export function useMarkdownConversion(): UseMarkdownConversionReturn {
     setIsConverting(true);
     setError(null);
     try {
-      const { MarkItDown } = await import('@markitdownjs/core');
+      const { MarkItDown } = await import("@markitdownjs/core");
       const parser = new MarkItDown();
       return await parser.convertToJson(file);
     } catch (err) {

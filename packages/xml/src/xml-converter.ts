@@ -63,7 +63,9 @@ export class XmlConverter implements Converter {
         createNode<HeadingNode>({
           type: "heading",
           level: 2,
-          children: [createNode<TextNode>({ type: "text", value: this.extractFeedTitle(document, rootTag) })],
+          children: [
+            createNode<TextNode>({ type: "text", value: this.extractFeedTitle(document, rootTag) }),
+          ],
         })
       );
 
@@ -80,9 +82,7 @@ export class XmlConverter implements Converter {
           children.push(
             createNode<ParagraphNode>({
               type: "paragraph",
-              children: [
-                createNode<TextNode>({ type: "text", value: `Link: ${entry.link}` }),
-              ],
+              children: [createNode<TextNode>({ type: "text", value: `Link: ${entry.link}` })],
             })
           );
         }
@@ -90,9 +90,7 @@ export class XmlConverter implements Converter {
           children.push(
             createNode<ParagraphNode>({
               type: "paragraph",
-              children: [
-                createNode<TextNode>({ type: "text", value: entry.description }),
-              ],
+              children: [createNode<TextNode>({ type: "text", value: entry.description })],
             })
           );
         }
@@ -158,11 +156,12 @@ export class XmlConverter implements Converter {
 
   private async readString(input: ConversionInput): Promise<string> {
     if (typeof input.data === "string") return input.data;
-    const bytes = input.data instanceof Uint8Array
-      ? input.data
-      : input.data instanceof ArrayBuffer
-        ? new Uint8Array(input.data)
-        : new Uint8Array(await input.data.arrayBuffer());
+    const bytes =
+      input.data instanceof Uint8Array
+        ? input.data
+        : input.data instanceof ArrayBuffer
+          ? new Uint8Array(input.data)
+          : new Uint8Array(await input.data.arrayBuffer());
     return new TextDecoder().decode(bytes);
   }
 
@@ -250,7 +249,11 @@ export class XmlConverter implements Converter {
   }
 
   private renderMarkdown(nodes: AnyNode[]): string {
-    return nodes.map((n) => this.renderNode(n)).join("\n\n").replace(/\n{3,}/g, "\n\n").trim();
+    return nodes
+      .map((n) => this.renderNode(n))
+      .join("\n\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
   }
 
   private renderNode(node: AnyNode): string {

@@ -76,9 +76,7 @@ export class MarkdownRenderer {
         return (
           n.children
             ?.map((item, i) =>
-              n.ordered
-                ? `${i + 1}. ${this.renderNode(item)}`
-                : `- ${this.renderNode(item)}`
+              n.ordered ? `${i + 1}. ${this.renderNode(item)}` : `- ${this.renderNode(item)}`
             )
             .join("\n") ?? ""
         );
@@ -88,12 +86,10 @@ export class MarkdownRenderer {
       case "table":
         return this.renderTable(node as TableNode);
       case "blockquote":
-        return (
-          this.renderChildren(node)
-            .split("\n")
-            .map((line) => `> ${line}`)
-            .join("\n")
-        );
+        return this.renderChildren(node)
+          .split("\n")
+          .map((line) => `> ${line}`)
+          .join("\n");
       case "thematic-break":
         return "---";
       case "html": {
@@ -110,31 +106,24 @@ export class MarkdownRenderer {
   }
 
   private renderTable(table: TableNode): string {
-    const rows = table.children.filter(
-      (r): r is TableRowNode => r.type === "table-row"
-    );
+    const rows = table.children.filter((r): r is TableRowNode => r.type === "table-row");
     if (rows.length === 0) return "";
 
     const headerRow = rows[0]!;
     const bodyRows = rows.slice(1);
 
-    const headerCells = headerRow.children.map(
-      (c) =>
-        (c.type === "table-cell"
-          ? this.renderChildren(c as TableCellNode)
-          : ""
-        ).replace(/\|/g, "\\|")
+    const headerCells = headerRow.children.map((c) =>
+      (c.type === "table-cell" ? this.renderChildren(c as TableCellNode) : "").replace(/\|/g, "\\|")
     );
     const separator = headerCells.map(() => "---").join(" | ");
     const headerLine = `| ${headerCells.join(" | ")} |`;
 
     const bodyLines = bodyRows.map((row) => {
-      const cells = row.children.map(
-        (c) =>
-          (c.type === "table-cell"
-            ? this.renderChildren(c as TableCellNode)
-            : ""
-          ).replace(/\|/g, "\\|")
+      const cells = row.children.map((c) =>
+        (c.type === "table-cell" ? this.renderChildren(c as TableCellNode) : "").replace(
+          /\|/g,
+          "\\|"
+        )
       );
       return `| ${cells.join(" | ")} |`;
     });
@@ -181,14 +170,8 @@ export class MarkdownRenderer {
       /`{3}(\w+)?\n([\s\S]*?)`{3}/g,
       '<pre><code class="language-$1">$2</code></pre>'
     );
-    html = html.replace(
-      /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2">$1</a>'
-    );
-    html = html.replace(
-      /!\[([^\]]*)\]\(([^)]+)\)/g,
-      '<img src="$2" alt="$1" />'
-    );
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
     html = html.replace(/^> (.+)$/gm, "<blockquote><p>$1</p></blockquote>");
     html = html.replace(/^[-*+] (.+)$/gm, "<li>$1</li>");
     const lines = html.split("\n");

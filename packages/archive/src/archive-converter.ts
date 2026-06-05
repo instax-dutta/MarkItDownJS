@@ -36,11 +36,7 @@ export class ArchiveConverter implements Converter {
     try {
       const data = await readInputData(input.data);
       if (data.length >= 4) {
-        const isZip =
-          data[0] === 0x50 &&
-          data[1] === 0x4b &&
-          data[2] === 0x03 &&
-          data[3] === 0x04;
+        const isZip = data[0] === 0x50 && data[1] === 0x4b && data[2] === 0x03 && data[3] === 0x04;
         if (isZip) return true;
       }
     } catch {
@@ -100,17 +96,16 @@ export class ArchiveConverter implements Converter {
         children: headerRow,
         isHeader: true,
       }),
-      ...tableData.rows.map(
-        (row) =>
-          createNode({
-            type: "table-row" as const,
-            children: row.map((cell) =>
-              createNode({
-                type: "table-cell" as const,
-                children: [createNode({ type: "text" as const, value: cell })],
-              })
-            ),
-          })
+      ...tableData.rows.map((row) =>
+        createNode({
+          type: "table-row" as const,
+          children: row.map((cell) =>
+            createNode({
+              type: "table-cell" as const,
+              children: [createNode({ type: "text" as const, value: cell })],
+            })
+          ),
+        })
       ),
     ];
 

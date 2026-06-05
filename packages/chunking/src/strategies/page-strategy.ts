@@ -1,14 +1,5 @@
-import type {
-  AnyNode,
-  DocumentChunk,
-  ChunkingOptions,
-  PageBreakNode,
-} from "@markitdownjs/shared";
-import {
-  walkAst,
-  isNodeOfType,
-  countTokens,
-} from "@markitdownjs/shared";
+import type { AnyNode, DocumentChunk, ChunkingOptions, PageBreakNode } from "@markitdownjs/shared";
+import { walkAst, isNodeOfType, countTokens } from "@markitdownjs/shared";
 import type { ChunkingStrategy } from "../chunker.js";
 import { createChunk } from "../chunker.js";
 
@@ -29,14 +20,7 @@ export class PageChunkingStrategy implements ChunkingStrategy {
 
     const flushChunk = (page?: number): void => {
       if (currentNodes.length === 0) return;
-      const chunk = createChunk(
-        [...currentNodes],
-        [],
-        options,
-        startIndex,
-        globalOffset,
-        page,
-      );
+      const chunk = createChunk([...currentNodes], [], options, startIndex, globalOffset, page);
       if (chunk) {
         if (countTokens(chunk.ast) > maxTokens) {
           const split = splitLargeChunk(currentNodes, options, maxTokens, startIndex, page);
@@ -79,7 +63,7 @@ export class PageChunkingStrategy implements ChunkingStrategy {
             options,
             maxTokens,
             single.metadata.startIndex,
-            single.metadata.page,
+            single.metadata.page
           );
         }
         return chunks;
@@ -99,7 +83,7 @@ function splitLargeChunk(
   options: ChunkingOptions,
   maxTokens: number,
   startIndex: number,
-  page?: number,
+  page?: number
 ): DocumentChunk[] {
   const chunks: DocumentChunk[] = [];
   let buffer: AnyNode[] = [];

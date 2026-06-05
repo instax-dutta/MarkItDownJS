@@ -1,8 +1,4 @@
-import type {
-  ConversionInput,
-  ConversionResult,
-  ConverterRegistry,
-} from "@markitdownjs/shared";
+import type { ConversionInput, ConversionResult, ConverterRegistry } from "@markitdownjs/shared";
 import { DefaultConverterRegistry } from "./registry.js";
 import { DocumentPipeline } from "./pipeline.js";
 import { MarkdownRenderer } from "./renderer.js";
@@ -39,9 +35,7 @@ export class MarkItDown {
     return result.markdown;
   }
 
-  async convertToJson(
-    input: ConversionInput | File | Blob | Uint8Array | string
-  ): Promise<string> {
+  async convertToJson(input: ConversionInput | File | Blob | Uint8Array | string): Promise<string> {
     const result = await this.convert(input);
     return this.renderer.render(result, "json");
   }

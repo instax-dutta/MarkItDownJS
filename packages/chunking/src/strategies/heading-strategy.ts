@@ -1,14 +1,5 @@
-import type {
-  AnyNode,
-  DocumentChunk,
-  ChunkingOptions,
-  HeadingNode,
-} from "@markitdownjs/shared";
-import {
-  getNodeText,
-  isNodeOfType,
-  countTokens,
-} from "@markitdownjs/shared";
+import type { AnyNode, DocumentChunk, ChunkingOptions, HeadingNode } from "@markitdownjs/shared";
+import { getNodeText, isNodeOfType, countTokens } from "@markitdownjs/shared";
 import type { ChunkingStrategy } from "../chunker.js";
 import { createChunk } from "../chunker.js";
 
@@ -33,7 +24,7 @@ export class HeadingChunkingStrategy implements ChunkingStrategy {
         [...headingPath],
         options,
         startIndex,
-        globalOffset,
+        globalOffset
       );
       if (chunk) {
         if (countTokens(chunk.ast) > maxTokens) {
@@ -92,7 +83,7 @@ function splitLargeChunk(
   headingPath: string[],
   options: ChunkingOptions,
   maxTokens: number,
-  startIndex: number,
+  startIndex: number
 ): DocumentChunk[] {
   const chunks: DocumentChunk[] = [];
   let buffer: AnyNode[] = [];
@@ -132,7 +123,7 @@ function splitParagraph(
   headingPath: string[],
   options: ChunkingOptions,
   maxTokens: number,
-  startIndex: number,
+  startIndex: number
 ): DocumentChunk[] {
   const text = getNodeText(node);
   const words = text.split(/\s+/).filter(Boolean);
@@ -161,5 +152,3 @@ function splitParagraph(
 
   return chunks;
 }
-
-

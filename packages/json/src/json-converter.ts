@@ -84,11 +84,12 @@ export class JsonConverter implements Converter {
 
   private async readString(input: ConversionInput): Promise<string> {
     if (typeof input.data === "string") return input.data;
-    const bytes = input.data instanceof Uint8Array
-      ? input.data
-      : input.data instanceof ArrayBuffer
-        ? new Uint8Array(input.data)
-        : new Uint8Array(await input.data.arrayBuffer());
+    const bytes =
+      input.data instanceof Uint8Array
+        ? input.data
+        : input.data instanceof ArrayBuffer
+          ? new Uint8Array(input.data)
+          : new Uint8Array(await input.data.arrayBuffer());
     return new TextDecoder().decode(bytes);
   }
 
@@ -104,7 +105,8 @@ export class JsonConverter implements Converter {
   private tryExtractTableData(data: unknown): TableData | null {
     if (!Array.isArray(data)) return null;
     if (data.length === 0) return null;
-    if (!data.every((item) => typeof item === "object" && item !== null && !Array.isArray(item))) return null;
+    if (!data.every((item) => typeof item === "object" && item !== null && !Array.isArray(item)))
+      return null;
 
     const keys = new Set<string>();
     for (const item of data) {
@@ -117,7 +119,11 @@ export class JsonConverter implements Converter {
     const rows = data.map((item) =>
       headers.map((h) => {
         const val = (item as Record<string, unknown>)[h];
-        return val === undefined || val === null ? "" : typeof val === "object" ? JSON.stringify(val) : String(val);
+        return val === undefined || val === null
+          ? ""
+          : typeof val === "object"
+            ? JSON.stringify(val)
+            : String(val);
       })
     );
 

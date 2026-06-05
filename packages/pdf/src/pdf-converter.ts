@@ -38,10 +38,7 @@ export class PdfConverter implements Converter {
       }
     }
     if (input.data instanceof Uint8Array || input.data instanceof ArrayBuffer) {
-      const bytes =
-        input.data instanceof Uint8Array
-          ? input.data
-          : new Uint8Array(input.data);
+      const bytes = input.data instanceof Uint8Array ? input.data : new Uint8Array(input.data);
       if (
         bytes.length >= 4 &&
         bytes[0] === 0x25 &&
@@ -143,18 +140,14 @@ export class PdfConverter implements Converter {
               createNode<HeadingNode>({
                 type: "heading",
                 level,
-                children: [
-                  createNode<TextNode>({ type: "text", value: heading.text }),
-                ],
+                children: [createNode<TextNode>({ type: "text", value: heading.text })],
               })
             );
           } else {
             pageNodes.push(
               createNode<ParagraphNode>({
                 type: "paragraph",
-                children: [
-                  createNode<TextNode>({ type: "text", value: trimmed }),
-                ],
+                children: [createNode<TextNode>({ type: "text", value: trimmed })],
               })
             );
           }
@@ -301,9 +294,7 @@ export class PdfConverter implements Converter {
    * @param data - The input data in any supported format.
    * @returns The data as a Uint8Array.
    */
-  private async toByteArray(
-    data: Uint8Array | ArrayBuffer | Blob | string
-  ): Promise<Uint8Array> {
+  private async toByteArray(data: Uint8Array | ArrayBuffer | Blob | string): Promise<Uint8Array> {
     if (data instanceof Uint8Array) return data;
     if (data instanceof ArrayBuffer) return new Uint8Array(data);
     if (data instanceof Blob) return new Uint8Array(await data.arrayBuffer());

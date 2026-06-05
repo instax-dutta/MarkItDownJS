@@ -47,10 +47,7 @@ export class DocxConverter implements Converter {
       }
     }
     if (input.data instanceof Uint8Array || input.data instanceof ArrayBuffer) {
-      const bytes =
-        input.data instanceof Uint8Array
-          ? input.data
-          : new Uint8Array(input.data);
+      const bytes = input.data instanceof Uint8Array ? input.data : new Uint8Array(input.data);
       if (
         bytes.length >= 4 &&
         bytes[0] === 0x50 &&
@@ -162,9 +159,7 @@ export class DocxConverter implements Converter {
     zip: any // eslint-disable-line @typescript-eslint/no-explicit-any
   ): Promise<Map<string, string>> {
     const map = new Map<string, string>();
-    const relsXml = await zip
-      .file("word/_rels/document.xml.rels")
-      ?.async("string");
+    const relsXml = await zip.file("word/_rels/document.xml.rels")?.async("string");
     if (!relsXml) return map;
 
     const doc = await parseXML(relsXml);
@@ -210,8 +205,7 @@ export class DocxConverter implements Converter {
       if (modified) metadata.modifiedAt = modified.textContent ?? undefined;
 
       const description = doc.getElementsByTagName("dc:description")[0];
-      if (description)
-        metadata.description = description.textContent ?? undefined;
+      if (description) metadata.description = description.textContent ?? undefined;
 
       const subject = doc.getElementsByTagName("dc:subject")[0];
       if (subject) metadata.subject = subject.textContent ?? undefined;
@@ -248,13 +242,7 @@ export class DocxConverter implements Converter {
 
     // Check for heading style.
     if (pStyle && /^Heading[1-6]$/.test(pStyle)) {
-      const level = parseInt(pStyle.replace("Heading", ""), 10) as
-        | 1
-        | 2
-        | 3
-        | 4
-        | 5
-        | 6;
+      const level = parseInt(pStyle.replace("Heading", ""), 10) as 1 | 2 | 3 | 4 | 5 | 6;
       return createNode<HeadingNode>({
         type: "heading",
         level,
@@ -348,10 +336,7 @@ export class DocxConverter implements Converter {
    * @param relsMap - Relationship ID to target path mapping.
    * @returns An array of LinkNode elements.
    */
-  private parseHyperlinks(
-    paraEl: Element,
-    relsMap: Map<string, string>
-  ): LinkNode[] {
+  private parseHyperlinks(paraEl: Element, relsMap: Map<string, string>): LinkNode[] {
     const links: LinkNode[] = [];
     const hyperlinks = paraEl.getElementsByTagName("w:hyperlink");
 
@@ -371,9 +356,7 @@ export class DocxConverter implements Converter {
         const tEl = run.getElementsByTagName("w:t")[0];
         const text = tEl?.textContent ?? "";
         if (text) {
-          textNodes.push(
-            createNode<TextNode>({ type: "text", value: text })
-          );
+          textNodes.push(createNode<TextNode>({ type: "text", value: text }));
         }
       }
 
@@ -415,10 +398,7 @@ export class DocxConverter implements Converter {
    * @param relsMap - Relationship mapping for hyperlink resolution.
    * @returns A TableNode, or null if no rows are found.
    */
-  private parseTable(
-    tblEl: Element,
-    relsMap: Map<string, string>
-  ): TableNode | null {
+  private parseTable(tblEl: Element, relsMap: Map<string, string>): TableNode | null {
     const rows: TableRowNode[] = [];
     const trs = tblEl.getElementsByTagName("w:tr");
 
@@ -449,9 +429,7 @@ export class DocxConverter implements Converter {
           if (para) cellNodes.push(para);
         }
         if (cellNodes.length === 0) {
-          cellNodes.push(
-            createNode<TextNode>({ type: "text", value: "" })
-          );
+          cellNodes.push(createNode<TextNode>({ type: "text", value: "" }));
         }
 
         cells.push(
@@ -513,9 +491,7 @@ export class DocxConverter implements Converter {
   private getNodeText(node: AnyNode): string {
     if (node.type === "text") return (node as TextNode).value;
     if ("children" in node && node.children) {
-      return (node.children as AnyNode[])
-        .map((c) => this.getNodeText(c))
-        .join("");
+      return (node.children as AnyNode[]).map((c) => this.getNodeText(c)).join("");
     }
     return "";
   }
@@ -525,9 +501,7 @@ export class DocxConverter implements Converter {
    * @param data - The input data in any supported format.
    * @returns The data as a Uint8Array.
    */
-  private async toByteArray(
-    data: Uint8Array | ArrayBuffer | Blob | string
-  ): Promise<Uint8Array> {
+  private async toByteArray(data: Uint8Array | ArrayBuffer | Blob | string): Promise<Uint8Array> {
     if (data instanceof Uint8Array) return data;
     if (data instanceof ArrayBuffer) return new Uint8Array(data);
     if (data instanceof Blob) return new Uint8Array(await data.arrayBuffer());

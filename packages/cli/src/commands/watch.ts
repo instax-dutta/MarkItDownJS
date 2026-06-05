@@ -1,15 +1,15 @@
-import { Command } from 'commander';
-import { watch, readFile, writeFile, stat, readdir } from 'fs/promises';
-import { join, basename, extname, resolve } from 'path';
-import { MarkItDown } from '@markitdownjs/core';
+import { Command } from "commander";
+import { watch, readFile, writeFile, stat, readdir } from "fs/promises";
+import { join, basename, extname, resolve } from "path";
+import { MarkItDown } from "@markitdownjs/core";
 
 export function registerWatchCommand(program: Command): void {
   program
-    .command('watch')
-    .description('Watch a directory and convert new/modified files to Markdown')
-    .argument('[dir]', 'Directory to watch', '.')
-    .option('-r, --recursive', 'Watch subdirectories recursively')
-    .option('-v, --verbose', 'Verbose output')
+    .command("watch")
+    .description("Watch a directory and convert new/modified files to Markdown")
+    .argument("[dir]", "Directory to watch", ".")
+    .option("-r, --recursive", "Watch subdirectories recursively")
+    .option("-v, --verbose", "Verbose output")
     .action(async (dir: string, options: { recursive: boolean; verbose: boolean }) => {
       const watchDir = resolve(dir);
       const parser = new MarkItDown();
@@ -25,17 +25,16 @@ export function registerWatchCommand(program: Command): void {
             fileName: filePath,
           });
 
-          const mdPath = join(
-            watchDir,
-            basename(filePath, extname(filePath)) + '.md'
-          );
-          await writeFile(mdPath, result.markdown, 'utf-8');
+          const mdPath = join(watchDir, basename(filePath, extname(filePath)) + ".md");
+          await writeFile(mdPath, result.markdown, "utf-8");
 
           if (options.verbose) {
             console.error(`Converted: ${filePath} -> ${mdPath}`);
           }
         } catch (error) {
-          console.error(`Error converting ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+          console.error(
+            `Error converting ${filePath}: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
       }
 
@@ -52,7 +51,9 @@ export function registerWatchCommand(program: Command): void {
             }
           }
         } catch (error) {
-          console.error(`Error scanning ${dirPath}: ${error instanceof Error ? error.message : String(error)}`);
+          console.error(
+            `Error scanning ${dirPath}: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
       }
 

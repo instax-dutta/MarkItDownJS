@@ -12,13 +12,7 @@ export interface AudioTranscriptionProvider {
 
 export class AudioConverter implements Converter {
   readonly id = "audio";
-  readonly supportedMimeTypes = [
-    "audio/mpeg",
-    "audio/wav",
-    "audio/mp4",
-    "audio/ogg",
-    "audio/flac",
-  ];
+  readonly supportedMimeTypes = ["audio/mpeg", "audio/wav", "audio/mp4", "audio/ogg", "audio/flac"];
   readonly supportedExtensions = [".mp3", ".wav", ".m4a", ".ogg", ".flac"];
 
   private provider: AudioTranscriptionProvider | null = null;

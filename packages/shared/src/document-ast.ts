@@ -228,10 +228,7 @@ export function createNode<T extends AnyNode>(node: T): T {
   return node;
 }
 
-export function isNodeOfType<T extends AnyNode>(
-  node: AnyNode,
-  type: T["type"]
-): node is T {
+export function isNodeOfType<T extends AnyNode>(node: AnyNode, type: T["type"]): node is T {
   return node.type === type;
 }
 
@@ -269,10 +266,7 @@ export function countTokens(node: AnyNode): number {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
-export function findNodesOfType<T extends AnyNode>(
-  root: AnyNode,
-  type: T["type"]
-): T[] {
+export function findNodesOfType<T extends AnyNode>(root: AnyNode, type: T["type"]): T[] {
   const results: T[] = [];
   walkAst(root, (node) => {
     if (node.type === type) results.push(node as T);

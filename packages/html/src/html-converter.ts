@@ -113,10 +113,9 @@ export class HtmlConverter implements Converter {
 
     const metadata: DocumentMetadata = {
       title: document.querySelector("title")?.textContent ?? undefined,
-      description: document.querySelector('meta[name="description"]')
-        ?.getAttribute("content") ?? undefined,
-      author: document.querySelector('meta[name="author"]')
-        ?.getAttribute("content") ?? undefined,
+      description:
+        document.querySelector('meta[name="description"]')?.getAttribute("content") ?? undefined,
+      author: document.querySelector('meta[name="author"]')?.getAttribute("content") ?? undefined,
       language: document.querySelector("html")?.getAttribute("lang") ?? undefined,
       wordCount: markdown.split(/\s+/).filter(Boolean).length,
     };
@@ -211,10 +210,7 @@ export class HtmlConverter implements Converter {
       case "h4":
       case "h5":
       case "h6":
-        return this.processHeading(
-          el,
-          parseInt(tag[1]!) as HeadingNode["level"]
-        );
+        return this.processHeading(el, parseInt(tag[1]!) as HeadingNode["level"]);
       case "p":
         return this.processParagraph(el);
       case "table":
@@ -297,10 +293,7 @@ export class HtmlConverter implements Converter {
    * @param level - The heading level (1-6)
    * @returns A HeadingNode with the appropriate level and children
    */
-  private processHeading(
-    el: HTMLElement,
-    level: HeadingNode["level"]
-  ): HeadingNode {
+  private processHeading(el: HTMLElement, level: HeadingNode["level"]): HeadingNode {
     return createNode<HeadingNode>({
       type: "heading",
       level,
@@ -742,7 +735,10 @@ export class HtmlConverter implements Converter {
     for (const node of nodes) {
       parts.push(this.renderNode(node));
     }
-    return parts.join("\n\n").replace(/\n{3,}/g, "\n\n").trim();
+    return parts
+      .join("\n\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
   }
 
   /**
@@ -783,9 +779,7 @@ export class HtmlConverter implements Converter {
       case "link": {
         const n = node as LinkNode;
         const text = this.renderNodes(n.children);
-        return n.title
-          ? `[${text}](${n.href} "${n.title}")`
-          : `[${text}](${n.href})`;
+        return n.title ? `[${text}](${n.href} "${n.title}")` : `[${text}](${n.href})`;
       }
       case "image": {
         const n = node as ImageNode;
@@ -882,13 +876,10 @@ export class HtmlConverter implements Converter {
 
     for (let r = 0; r < cellTexts.length; r++) {
       const cells = cellTexts[r]!;
-      const line =
-        "| " + cells.map((c, i) => c.padEnd(colWidths[i]!)).join(" | ") + " |";
+      const line = "| " + cells.map((c, i) => c.padEnd(colWidths[i]!)).join(" | ") + " |";
       lines.push(line);
       if (r === 0) {
-        lines.push(
-          "| " + colWidths.map((w) => "-".repeat(w)).join(" | ") + " |"
-        );
+        lines.push("| " + colWidths.map((w) => "-".repeat(w)).join(" | ") + " |");
       }
     }
     return lines.join("\n");
@@ -911,9 +902,7 @@ export class HtmlConverter implements Converter {
    * @param nodes - The AST nodes to search
    * @returns An array of heading info objects with level, text, and optional id
    */
-  private extractHeadings(
-    nodes: AnyNode[]
-  ): { level: number; text: string; id?: string }[] {
+  private extractHeadings(nodes: AnyNode[]): { level: number; text: string; id?: string }[] {
     const headings: { level: number; text: string; id?: string }[] = [];
     for (const node of nodes) {
       if (node.type === "heading") {

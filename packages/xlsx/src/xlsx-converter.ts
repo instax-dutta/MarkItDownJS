@@ -67,10 +67,7 @@ export class XlsxConverter implements Converter {
       }
     }
     if (input.data instanceof Uint8Array || input.data instanceof ArrayBuffer) {
-      const bytes =
-        input.data instanceof Uint8Array
-          ? input.data
-          : new Uint8Array(input.data);
+      const bytes = input.data instanceof Uint8Array ? input.data : new Uint8Array(input.data);
       if (
         bytes.length >= 4 &&
         bytes[0] === 0x50 &&
@@ -166,9 +163,7 @@ export class XlsxConverter implements Converter {
       const headingNode = createNode<HeadingNode>({
         type: "heading",
         level: 2,
-        children: [
-          createNode<TextNode>({ type: "text", value: sheet.name }),
-        ],
+        children: [createNode<TextNode>({ type: "text", value: sheet.name })],
       });
       sheetChildren.push(headingNode);
       headings.push({ level: 2, text: sheet.name });
@@ -200,8 +195,7 @@ export class XlsxConverter implements Converter {
     return {
       markdown,
       metadata: {
-        format:
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        format: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         source: "jszip",
       },
       assets: [],
@@ -227,9 +221,7 @@ export class XlsxConverter implements Converter {
    * @param zip - The JSZip archive of the XLSX.
    * @returns A Map from string index to string value.
    */
-  private async parseSharedStrings(
-    zip: JSZipInstance
-  ): Promise<Map<number, string>> {
+  private async parseSharedStrings(zip: JSZipInstance): Promise<Map<number, string>> {
     const map = new Map<number, string>();
     const xml = await zip.file("xl/sharedStrings.xml")?.async("string");
     if (!xml) return map;
@@ -305,9 +297,7 @@ export class XlsxConverter implements Converter {
       const mc = mergeCells.item(i);
       if (!mc) continue;
       const ref = mc.getAttribute("ref") ?? "";
-      const match = ref.match(
-        /^([A-Z]+)(\d+):([A-Z]+)(\d+)$/
-      );
+      const match = ref.match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/);
       if (match) {
         merges.push({
           startCol: this.columnLetterToIndex(match[1]!),
@@ -405,9 +395,7 @@ export class XlsxConverter implements Converter {
           children: row.map((cellValue) =>
             createNode<TableCellNode>({
               type: "table-cell",
-              children: [
-                createNode<TextNode>({ type: "text", value: cellValue }),
-              ],
+              children: [createNode<TextNode>({ type: "text", value: cellValue })],
             })
           ),
         })
@@ -439,9 +427,7 @@ export class XlsxConverter implements Converter {
    * @param data - The input data in any supported format.
    * @returns The data as a Uint8Array.
    */
-  private async toByteArray(
-    data: Uint8Array | ArrayBuffer | Blob | string
-  ): Promise<Uint8Array> {
+  private async toByteArray(data: Uint8Array | ArrayBuffer | Blob | string): Promise<Uint8Array> {
     if (data instanceof Uint8Array) return data;
     if (data instanceof ArrayBuffer) return new Uint8Array(data);
     if (data instanceof Blob) return new Uint8Array(await data.arrayBuffer());

@@ -158,10 +158,7 @@ function parseMetadata(doc: Document): OpfMetadata {
   meta.date = getText("dc\\:date") ?? getText("date");
   meta.publisher = getText("dc\\:publisher") ?? getText("publisher");
   meta.rights = getText("dc\\:rights") ?? getText("rights");
-  meta.subject = [
-    ...(getAllText("dc\\:subject") ?? []),
-    ...(getAllText("subject") ?? []),
-  ];
+  meta.subject = [...(getAllText("dc\\:subject") ?? []), ...(getAllText("subject") ?? [])];
 
   // Additional meta elements
   const allMetaEls = metaEl.querySelectorAll("meta");
@@ -184,10 +181,7 @@ function parseMetadata(doc: Document): OpfMetadata {
  * @param opfDir - The directory containing the OPF file (for resolving relative hrefs)
  * @returns A Map from item id to OpfManifestItem
  */
-function parseManifest(
-  doc: Document,
-  opfDir: string
-): Map<string, OpfManifestItem> {
+function parseManifest(doc: Document, opfDir: string): Map<string, OpfManifestItem> {
   const manifest = new Map<string, OpfManifestItem>();
   const manifestEl = doc.querySelector("manifest");
   if (!manifestEl) return manifest;
@@ -342,9 +336,7 @@ function processSingleNode(node: ChildNode): AnyNode | AnyNode[] | null {
       return createNode<ListNode>({
         type: "list",
         ordered: tag === "ol",
-        start: tag === "ol"
-          ? parseInt(el.getAttribute("start") ?? "1") || 1
-          : undefined,
+        start: tag === "ol" ? parseInt(el.getAttribute("start") ?? "1") || 1 : undefined,
         children: processListItems(el),
       });
 
@@ -530,7 +522,10 @@ function renderMarkdown(nodes: AnyNode[]): string {
   for (const node of nodes) {
     parts.push(renderNode(node));
   }
-  return parts.join("\n\n").replace(/\n{3,}/g, "\n\n").trim();
+  return parts
+    .join("\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 /**
@@ -569,9 +564,7 @@ function renderNode(node: AnyNode): string {
     case "link": {
       const n = node as LinkNode;
       const text = renderNodes(n.children);
-      return n.title
-        ? `[${text}](${n.href} "${n.title}")`
-        : `[${text}](${n.href})`;
+      return n.title ? `[${text}](${n.href} "${n.title}")` : `[${text}](${n.href})`;
     }
     case "image": {
       const n = node as ImageNode;
@@ -634,9 +627,7 @@ function renderTable(table: TableNode): string {
   const colCount = rows[0]?.children.length ?? 0;
   const colWidths = new Array<number>(colCount).fill(3);
 
-  const cellTexts = rows.map((row) =>
-    row.children.map((cell) => renderNodes(cell.children))
-  );
+  const cellTexts = rows.map((row) => row.children.map((cell) => renderNodes(cell.children)));
 
   for (const row of cellTexts) {
     for (let i = 0; i < row.length; i++) {
@@ -646,8 +637,7 @@ function renderTable(table: TableNode): string {
 
   for (let r = 0; r < cellTexts.length; r++) {
     const cells = cellTexts[r]!;
-    const line =
-      "| " + cells.map((c, i) => c.padEnd(colWidths[i]!)).join(" | ") + " |";
+    const line = "| " + cells.map((c, i) => c.padEnd(colWidths[i]!)).join(" | ") + " |";
     lines.push(line);
     if (r === 0) {
       lines.push("| " + colWidths.map((w) => "-".repeat(w)).join(" | ") + " |");
@@ -706,9 +696,7 @@ export class EpubConverter implements Converter {
     }
 
     if (input.fileName) {
-      const ext = input.fileName
-        .slice(input.fileName.lastIndexOf("."))
-        .toLowerCase();
+      const ext = input.fileName.slice(input.fileName.lastIndexOf(".")).toLowerCase();
       if (this.supportedExtensions.includes(ext)) {
         return true;
       }
@@ -717,11 +705,7 @@ export class EpubConverter implements Converter {
     try {
       const data = await readInputData(input.data);
       if (data.length >= 4) {
-        const isZip =
-          data[0] === 0x50 &&
-          data[1] === 0x4b &&
-          data[2] === 0x03 &&
-          data[3] === 0x04;
+        const isZip = data[0] === 0x50 && data[1] === 0x4b && data[2] === 0x03 && data[3] === 0x04;
         if (isZip) return true;
       }
     } catch {
@@ -816,9 +800,7 @@ export class EpubConverter implements Converter {
       description: opf.metadata.description,
       createdAt: opf.metadata.date,
       keywords:
-        opf.metadata.subject && opf.metadata.subject.length > 0
-          ? opf.metadata.subject
-          : undefined,
+        opf.metadata.subject && opf.metadata.subject.length > 0 ? opf.metadata.subject : undefined,
       wordCount: markdown.split(/\s+/).filter(Boolean).length,
       customProperties: {
         identifier: opf.metadata.identifier,

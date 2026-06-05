@@ -1,8 +1,4 @@
-import type {
-  ConversionInput,
-  ConversionResult,
-  ConverterRegistry,
-} from "@markitdownjs/shared";
+import type { ConversionInput, ConversionResult, ConverterRegistry } from "@markitdownjs/shared";
 import { ConversionError, CancellationError } from "@markitdownjs/shared";
 import { checkSignal, readInputData } from "@markitdownjs/shared";
 import { DefaultConverterRegistry } from "./registry.js";
@@ -83,9 +79,7 @@ export class DocumentPipeline {
     return result;
   }
 
-  async convertWithFallback(
-    input: ConversionInput
-  ): Promise<ConversionResult> {
+  async convertWithFallback(input: ConversionInput): Promise<ConversionResult> {
     try {
       return await this.convert(input);
     } catch (error) {

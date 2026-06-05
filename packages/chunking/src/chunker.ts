@@ -1,9 +1,4 @@
-import type {
-  AnyNode,
-  DocumentChunk,
-  ChunkMetadata,
-  ChunkingOptions,
-} from "@markitdownjs/shared";
+import type { AnyNode, DocumentChunk, ChunkMetadata, ChunkingOptions } from "@markitdownjs/shared";
 import { getNodeText, generateId } from "@markitdownjs/shared";
 import { HeadingChunkingStrategy } from "./strategies/heading-strategy.js";
 import { PageChunkingStrategy } from "./strategies/page-strategy.js";
@@ -25,17 +20,14 @@ export function createChunk(
   options: ChunkingOptions,
   startIndex: number,
   endIndex: number,
-  page?: number,
+  page?: number
 ): DocumentChunk | null {
   if (nodes.length === 0) return null;
 
   const content = nodes.map((n) => getNodeText(n)).join("\n\n");
   const tokenCount = content.split(/\s+/).filter(Boolean).length;
 
-  const root: AnyNode =
-    nodes.length === 1
-      ? nodes[0]!
-      : { type: "document", children: nodes };
+  const root: AnyNode = nodes.length === 1 ? nodes[0]! : { type: "document", children: nodes };
 
   const metadata: ChunkMetadata = {
     chunkId: generateId(),

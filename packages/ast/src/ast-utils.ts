@@ -7,16 +7,16 @@ import {
   getNodeText,
   findNodesOfType,
   countTokens as sharedCountTokens,
-} from '@markitdownjs/shared';
+} from "@markitdownjs/shared";
 
-export type { HeadingInfo } from '@markitdownjs/shared';
+export type { HeadingInfo } from "@markitdownjs/shared";
 
 export function extractText(node: AnyNode): string {
   return getNodeText(node);
 }
 
 export function extractHeadings(node: AnyNode): HeadingInfo[] {
-  const headings = findNodesOfType<HeadingNode>(node, 'heading');
+  const headings = findNodesOfType<HeadingNode>(node, "heading");
   return headings.map((h) => ({
     level: h.level,
     text: getNodeText(h),
@@ -31,7 +31,7 @@ export function countTokens(node: AnyNode): number {
 export function findNodeById(node: AnyNode, id: string): AnyNode | null {
   let found: AnyNode | null = null;
   walkAst(node, (n) => {
-    if ('id' in n && n.id === id) {
+    if ("id" in n && n.id === id) {
       found = n;
       return false;
     }
@@ -44,7 +44,7 @@ export function getDepth(node: AnyNode): number {
   let maxDepth = 0;
   const visit = (n: AnyNode, depth: number): void => {
     if (depth > maxDepth) maxDepth = depth;
-    if ('children' in n && Array.isArray(n.children)) {
+    if ("children" in n && Array.isArray(n.children)) {
       for (const child of n.children) {
         visit(child, depth + 1);
       }
@@ -70,7 +70,7 @@ export function mergeDocuments(...nodes: DocumentNode[]): DocumentNode {
     }
   }
   return {
-    type: 'document',
+    type: "document",
     children,
   };
 }

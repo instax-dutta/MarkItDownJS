@@ -31,9 +31,7 @@ export class DefaultConverterRegistry implements ConverterRegistry {
 
   register(converter: Converter): void {
     if (this.converters.has(converter.id)) {
-      this.logger.warn(
-        `Converter "${converter.id}" is already registered, overwriting.`
-      );
+      this.logger.warn(`Converter "${converter.id}" is already registered, overwriting.`);
     }
     this.converters.set(converter.id, converter);
     this.logger.debug(`Registered converter: ${converter.id}`);
@@ -125,7 +123,8 @@ export class DefaultConverterRegistry implements ConverterRegistry {
       await plugin.initialize?.(context);
     } catch (error) {
       throw new Error(
-        `Failed to initialize plugin "${plugin.id}": ${error instanceof Error ? error.message : String(error)}`
+        `Failed to initialize plugin "${plugin.id}": ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error }
       );
     }
 
@@ -164,9 +163,7 @@ export class DefaultConverterRegistry implements ConverterRegistry {
     }
 
     if (plugin.middleware) {
-      this.middlewares = this.middlewares.filter(
-        (m) => !plugin.middleware!.includes(m)
-      );
+      this.middlewares = this.middlewares.filter((m) => !plugin.middleware!.includes(m));
     }
 
     this.plugins.delete(id);

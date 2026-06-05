@@ -81,11 +81,12 @@ export class CsvConverter implements Converter {
 
   private async readString(input: ConversionInput): Promise<string> {
     if (typeof input.data === "string") return input.data;
-    const bytes = input.data instanceof Uint8Array
-      ? input.data
-      : input.data instanceof ArrayBuffer
-        ? new Uint8Array(input.data)
-        : new Uint8Array(await input.data.arrayBuffer());
+    const bytes =
+      input.data instanceof Uint8Array
+        ? input.data
+        : input.data instanceof ArrayBuffer
+          ? new Uint8Array(input.data)
+          : new Uint8Array(await input.data.arrayBuffer());
     return new TextDecoder().decode(bytes);
   }
 
@@ -170,9 +171,7 @@ export class CsvConverter implements Converter {
         cells.push(
           createNode<TableCellNode>({
             type: "table-cell",
-            children: [
-              createNode<TextNode>({ type: "text", value: field }),
-            ],
+            children: [createNode<TextNode>({ type: "text", value: field })],
           })
         );
       }
@@ -204,19 +203,13 @@ export class CsvConverter implements Converter {
     }
 
     const lines: string[] = [];
-    const headerLine =
-      "| " + header.map((h, i) => h.padEnd(colWidths[i]!)).join(" | ") + " |";
+    const headerLine = "| " + header.map((h, i) => h.padEnd(colWidths[i]!)).join(" | ") + " |";
     lines.push(headerLine);
-    lines.push(
-      "| " + colWidths.map((w) => "-".repeat(w)).join(" | ") + " |"
-    );
+    lines.push("| " + colWidths.map((w) => "-".repeat(w)).join(" | ") + " |");
 
     for (let r = 1; r < rows.length; r++) {
       const row = rows[r]!;
-      const line =
-        "| " +
-        row.map((c, i) => c.padEnd(colWidths[i] ?? c.length)).join(" | ") +
-        " |";
+      const line = "| " + row.map((c, i) => c.padEnd(colWidths[i] ?? c.length)).join(" | ") + " |";
       lines.push(line);
     }
 

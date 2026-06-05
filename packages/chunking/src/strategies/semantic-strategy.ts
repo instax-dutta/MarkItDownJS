@@ -5,12 +5,7 @@ import type {
   HeadingNode,
   ParagraphNode,
 } from "@markitdownjs/shared";
-import {
-  walkAst,
-  getNodeText,
-  isNodeOfType,
-  countTokens,
-} from "@markitdownjs/shared";
+import { walkAst, getNodeText, isNodeOfType, countTokens } from "@markitdownjs/shared";
 import type { ChunkingStrategy } from "../chunker.js";
 import { createChunk } from "../chunker.js";
 
@@ -93,10 +88,7 @@ function groupBySemanticBoundary(nodes: AnyNode[]): AnyNode[][] {
         currentGroup = [];
       }
       currentGroup.push(node);
-    } else if (
-      node.type === "thematic-break" ||
-      node.type === "horizontal-rule"
-    ) {
+    } else if (node.type === "thematic-break" || node.type === "horizontal-rule") {
       if (currentGroup.length > 0) {
         groups.push(currentGroup);
         currentGroup = [];
@@ -128,7 +120,7 @@ function splitGroupByTokens(
   nodes: AnyNode[],
   maxTokens: number,
   overlap: number,
-  options: ChunkingOptions,
+  options: ChunkingOptions
 ): DocumentChunk[] {
   const chunks: DocumentChunk[] = [];
   let buffer: AnyNode[] = [];

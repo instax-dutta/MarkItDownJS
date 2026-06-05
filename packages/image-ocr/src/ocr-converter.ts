@@ -21,14 +21,14 @@ import {
 
 /** Magic byte signatures for additional image format detection. */
 const IMAGE_SIGNATURES: { bytes: number[]; mime: string }[] = [
-  { bytes: [0x89, 0x50, 0x4e, 0x47], mime: "image/png" },        // PNG
-  { bytes: [0xff, 0xd8, 0xff], mime: "image/jpeg" },              // JPEG
-  { bytes: [0x52, 0x49, 0x46, 0x46], mime: "image/webp" },       // RIFF (WebP)
-  { bytes: [0x47, 0x49, 0x46, 0x38], mime: "image/gif" },        // GIF8
-  { bytes: [0x42, 0x4d], mime: "image/bmp" },                     // BMP
-  { bytes: [0x49, 0x49, 0x2a, 0x00], mime: "image/tiff" },       // TIFF (little-endian)
-  { bytes: [0x4d, 0x4d, 0x00, 0x2a], mime: "image/tiff" },       // TIFF (big-endian)
-  { bytes: [0x00, 0x00, 0x01, 0x00], mime: "image/x-icon" },     // ICO
+  { bytes: [0x89, 0x50, 0x4e, 0x47], mime: "image/png" }, // PNG
+  { bytes: [0xff, 0xd8, 0xff], mime: "image/jpeg" }, // JPEG
+  { bytes: [0x52, 0x49, 0x46, 0x46], mime: "image/webp" }, // RIFF (WebP)
+  { bytes: [0x47, 0x49, 0x46, 0x38], mime: "image/gif" }, // GIF8
+  { bytes: [0x42, 0x4d], mime: "image/bmp" }, // BMP
+  { bytes: [0x49, 0x49, 0x2a, 0x00], mime: "image/tiff" }, // TIFF (little-endian)
+  { bytes: [0x4d, 0x4d, 0x00, 0x2a], mime: "image/tiff" }, // TIFF (big-endian)
+  { bytes: [0x00, 0x00, 0x01, 0x00], mime: "image/x-icon" }, // ICO
   { bytes: [0x38, 0x50, 0x53, 0x00], mime: "image/vnd.adobe.photoshop" }, // PSD
 ];
 
@@ -141,7 +141,10 @@ function renderMarkdown(nodes: AnyNode[]): string {
   for (const node of nodes) {
     parts.push(renderNode(node));
   }
-  return parts.join("\n\n").replace(/\n{3,}/g, "\n\n").trim();
+  return parts
+    .join("\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 /**
@@ -244,9 +247,7 @@ export class ImageOcrConverter implements Converter {
     }
 
     if (input.fileName) {
-      const ext = input.fileName
-        .slice(input.fileName.lastIndexOf("."))
-        .toLowerCase();
+      const ext = input.fileName.slice(input.fileName.lastIndexOf(".")).toLowerCase();
       if (this.supportedExtensions.includes(ext)) {
         return true;
       }
@@ -275,8 +276,7 @@ export class ImageOcrConverter implements Converter {
   async convert(input: ConversionInput): Promise<ConversionResult> {
     const startTime = performance.now();
     const data = await readInputData(input.data);
-    const mimeType =
-      input.mimeType ?? detectImageMimeType(data) ?? "image/png";
+    const mimeType = input.mimeType ?? detectImageMimeType(data) ?? "image/png";
     const imageId = generateId();
 
     // Extract image dimensions (best-effort, from raw bytes)
@@ -284,10 +284,10 @@ export class ImageOcrConverter implements Converter {
 
     // Determine OCR language from options (default: English)
     const ocrLanguage =
-      input.options?.customProperties?.ocrLanguage as string | undefined ?? "eng";
+      (input.options?.customProperties?.ocrLanguage as string | undefined) ?? "eng";
 
     // Perform OCR
-    let ocrText = "";
+    let ocrText: string;
     let ocrConfidence: number | undefined;
     let ocrSuccess = false;
 
@@ -302,8 +302,7 @@ export class ImageOcrConverter implements Converter {
       ocrConfidence = result.data.confidence;
       ocrSuccess = ocrText.length > 0;
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : String(err);
+      const errorMessage = err instanceof Error ? err.message : String(err);
 
       if (
         errorMessage.includes("Cannot find module") ||

@@ -11,7 +11,7 @@ export class MetadataExtractor {
 
     const words = markdown
       .replace(/```[\s\S]*?```/g, "")
-      .replace(/[#*_`\[\]()!]/g, "")
+      .replace(/[#*_`[\]()!]/g, "")
       .split(/\s+/)
       .filter((w) => w.length > 0);
     metadata.wordCount = words.length;
