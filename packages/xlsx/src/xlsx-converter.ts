@@ -9,6 +9,8 @@ import type {
 import {
   createNode,
   parseXML,
+  strictCanConvert,
+  checkZipBombRisk,
   DocumentNode,
   HeadingNode,
   TextNode,
@@ -57,28 +59,12 @@ export class XlsxConverter implements Converter {
    * @returns True if the input is a supported XLSX.
    */
   async canConvert(input: ConversionInput): Promise<boolean> {
-    if (input.mimeType && this.supportedMimeTypes.includes(input.mimeType)) {
-      return true;
-    }
-    if (input.fileName) {
-      const ext = input.fileName.toLowerCase();
-      if (this.supportedExtensions.some((e) => ext.endsWith(e))) {
-        return true;
-      }
-    }
-    if (input.data instanceof Uint8Array || input.data instanceof ArrayBuffer) {
-      const bytes = input.data instanceof Uint8Array ? input.data : new Uint8Array(input.data);
-      if (
-        bytes.length >= 4 &&
-        bytes[0] === 0x50 &&
-        bytes[1] === 0x4b &&
-        bytes[2] === 0x03 &&
-        bytes[3] === 0x04
-      ) {
-        return true;
-      }
-    }
-    return false;
+    // Strict dispatch: ZIP magic bytes are shared across .docx/.xlsx/.pptx/.epub —
+    // sniffing them here would cause this converter to intercept other formats.
+    return strictCanConvert(input, {
+      mimeTypes: this.supportedMimeTypes,
+      extensions: this.supportedExtensions,
+    });
   }
 
   /**
@@ -96,7 +82,8 @@ export class XlsxConverter implements Converter {
     const startTime = Date.now();
     const data = await this.toByteArray(input.data);
     const JSZip = (await import("jszip")).default;
-    const zip: JSZipInstance = await JSZip.loadAsync(data);
+    const zip: JSZipInstance = await JSZip.loadAsync(data, { checkCRC32: true });
+    checkZipBombRisk(zip);
     const renderer = new MarkdownRenderer();
 
     const sharedStrings = await this.parseSharedStrings(zip);
@@ -157,6 +144,10 @@ export class XlsxConverter implements Converter {
 
       if (grid.length === 0) continue;
 
+      // Prune entirely-blank rows and columns before building AST.
+      const prunedGrid = this.pruneEmptyRowsCols(grid);
+      if (prunedGrid.length === 0) continue;
+
       // Build AST: SectionNode > HeadingNode + TableNode.
       const sheetChildren: AnyNode[] = [];
 
@@ -169,11 +160,11 @@ export class XlsxConverter implements Converter {
       headings.push({ level: 2, text: sheet.name });
 
       // Build table from grid.
-      const tableNode = this.buildTableFromGrid(grid);
+      const tableNode = this.buildTableFromGrid(prunedGrid);
       sheetChildren.push(tableNode);
 
       // Build TableData summary.
-      const tableData = this.gridToTableData(grid);
+      const tableData = this.gridToTableData(prunedGrid);
       tables.push(tableData);
 
       sectionNodes.push(
@@ -377,25 +368,38 @@ export class XlsxConverter implements Converter {
   /**
    * Build a TableNode from a 2D string grid.
    *
-   * The first row is treated as the header row.
+   * The first row is treated as the header row. If every cell in that row is
+   * empty, synthetic column names (Column A, Column B, …) are generated.
    *
-   * @param grid - A 2D array of cell values.
+   * @param grid - A 2D array of cell values (already pruned).
    * @returns A TableNode AST node.
    */
   private buildTableFromGrid(grid: string[][]): TableNode {
     const rows: TableRowNode[] = [];
+    const headerCells = this.detectOrGenerateHeader(grid[0]!);
 
-    for (let r = 0; r < grid.length; r++) {
-      const row = grid[r]!;
-      const isHeader = r === 0;
+    rows.push(
+      createNode<TableRowNode>({
+        type: "table-row",
+        isHeader: true,
+        children: headerCells.map((v) =>
+          createNode<TableCellNode>({
+            type: "table-cell",
+            children: [createNode<TextNode>({ type: "text", value: v })],
+          })
+        ),
+      })
+    );
+
+    for (let r = 1; r < grid.length; r++) {
       rows.push(
         createNode<TableRowNode>({
           type: "table-row",
-          isHeader,
-          children: row.map((cellValue) =>
+          isHeader: false,
+          children: grid[r]!.map((v) =>
             createNode<TableCellNode>({
               type: "table-cell",
-              children: [createNode<TextNode>({ type: "text", value: cellValue })],
+              children: [createNode<TextNode>({ type: "text", value: v })],
             })
           ),
         })
@@ -406,6 +410,42 @@ export class XlsxConverter implements Converter {
       type: "table",
       children: rows,
     });
+  }
+
+  /**
+   * If every cell in the header row is empty, generate generic column names
+   * (Column A, Column B, …, Column Z, Column AA, …).
+   */
+  private detectOrGenerateHeader(row: string[]): string[] {
+    if (row.every((c) => c.trim() === "")) {
+      return row.map((_, i) => {
+        if (i < 26) return `Column ${String.fromCharCode(65 + i)}`;
+        const major = Math.floor(i / 26);
+        const minor = i % 26;
+        return `Column ${String.fromCharCode(64 + major)}${String.fromCharCode(65 + minor)}`;
+      });
+    }
+    return row;
+  }
+
+  /**
+   * Remove entirely-blank rows and columns from a grid.
+   *
+   * A column is blank when every row has an empty string at that index.
+   * A row is blank when every kept column has an empty string.
+   */
+  private pruneEmptyRowsCols(grid: string[][]): string[][] {
+    if (grid.length === 0) return grid;
+    const colCount = Math.max(0, ...grid.map((r) => r.length));
+    if (colCount === 0) return [];
+
+    const keepCol: boolean[] = Array.from({ length: colCount }, (_, c) =>
+      grid.some((row) => (row[c] ?? "").trim() !== "")
+    );
+
+    return grid
+      .filter((row) => keepCol.some((keep, c) => keep && (row[c] ?? "").trim() !== ""))
+      .map((row) => row.filter((_, c) => keepCol[c]));
   }
 
   /**

@@ -100,3 +100,6 @@ export {
 } from "./utils.js";
 
 export { parseHTML, parseXML, serializeXML } from "./dom.js";
+
+export { strictCanConvert, isZipMagic, checkZipBombRisk } from "./converter-utils.js";
+export type { StrictCanConvertOptions } from "./converter-utils.js";

@@ -24,10 +24,10 @@
   },
   "dependencies": {
     "@markitdownjs/shared": "workspace:*",
-    "jszip": "^3.10.0"
+    "jszip": "^3.10.0",
+    "linkedom": "^0.18.12"
   },
   "devDependencies": {
-    "linkedom": "^0.18.12",
     "typescript": "^5.5.0"
   }
 }

@@ -6,7 +6,13 @@ import type {
   TableData,
   AnyNode,
 } from "@markitdownjs/shared";
-import { createNode, readInputData } from "@markitdownjs/shared";
+import {
+  createNode,
+  readInputData,
+  strictCanConvert,
+  isZipMagic,
+  checkZipBombRisk,
+} from "@markitdownjs/shared";
 import JSZip from "jszip";
 
 function formatSize(bytes: number): string {
@@ -22,28 +28,14 @@ export class ArchiveConverter implements Converter {
   readonly supportedExtensions = [".zip"];
 
   async canConvert(input: ConversionInput): Promise<boolean> {
-    if (input.mimeType && this.supportedMimeTypes.includes(input.mimeType)) {
-      return true;
-    }
-
-    if (input.fileName) {
-      const ext = input.fileName.slice(input.fileName.lastIndexOf(".")).toLowerCase();
-      if (this.supportedExtensions.includes(ext)) {
-        return true;
-      }
-    }
-
-    try {
-      const data = await readInputData(input.data);
-      if (data.length >= 4) {
-        const isZip = data[0] === 0x50 && data[1] === 0x4b && data[2] === 0x03 && data[3] === 0x04;
-        if (isZip) return true;
-      }
-    } catch {
-      return false;
-    }
-
-    return false;
+    // archive is the catch-all for ZIP files — keeps ZIP magic-byte fallback for the
+    // case where no mimeType/fileName is provided. Specific OOXML/EPUB converters use
+    // strict mode (no magic-byte fallback) so they don't intercept each other.
+    return strictCanConvert(input, {
+      mimeTypes: this.supportedMimeTypes,
+      extensions: this.supportedExtensions,
+      magicBytes: isZipMagic,
+    });
   }
 
   async convert(input: ConversionInput): Promise<ConversionResult> {
@@ -51,6 +43,7 @@ export class ArchiveConverter implements Converter {
     const data = await readInputData(input.data);
 
     const zip = await JSZip.loadAsync(data);
+    checkZipBombRisk(zip);
     const entries: Array<{ path: string; size: number; type: "File" | "Directory" }> = [];
 
     const processEntries: Promise<void>[] = [];

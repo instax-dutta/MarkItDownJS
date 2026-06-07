@@ -9,6 +9,8 @@ import type {
 import {
   createNode,
   parseXML,
+  strictCanConvert,
+  checkZipBombRisk,
   DocumentNode,
   HeadingNode,
   ParagraphNode,
@@ -22,6 +24,7 @@ import {
   StrikethroughNode,
 } from "@markitdownjs/shared";
 import { MarkdownRenderer } from "@markitdownjs/ast";
+import { isTag } from "./utils.js";
 
 /** Convert DOCX files to markdown via AST-first processing. */
 export class DocxConverter implements Converter {
@@ -37,28 +40,12 @@ export class DocxConverter implements Converter {
    * @returns True if the input is a supported DOCX.
    */
   async canConvert(input: ConversionInput): Promise<boolean> {
-    if (input.mimeType && this.supportedMimeTypes.includes(input.mimeType)) {
-      return true;
-    }
-    if (input.fileName) {
-      const ext = input.fileName.toLowerCase();
-      if (this.supportedExtensions.some((e) => ext.endsWith(e))) {
-        return true;
-      }
-    }
-    if (input.data instanceof Uint8Array || input.data instanceof ArrayBuffer) {
-      const bytes = input.data instanceof Uint8Array ? input.data : new Uint8Array(input.data);
-      if (
-        bytes.length >= 4 &&
-        bytes[0] === 0x50 &&
-        bytes[1] === 0x4b &&
-        bytes[2] === 0x03 &&
-        bytes[3] === 0x04
-      ) {
-        return true;
-      }
-    }
-    return false;
+    // Strict dispatch: do NOT fall back to ZIP magic bytes — that header is shared by
+    // .docx, .xlsx, .pptx, .epub and would cause this converter to intercept other formats.
+    return strictCanConvert(input, {
+      mimeTypes: this.supportedMimeTypes,
+      extensions: this.supportedExtensions,
+    });
   }
 
   /**
@@ -77,6 +64,7 @@ export class DocxConverter implements Converter {
     const data = await this.toByteArray(input.data);
     const JSZip = (await import("jszip")).default;
     const zip = await JSZip.loadAsync(data);
+    checkZipBombRisk(zip);
     const renderer = new MarkdownRenderer();
 
     // Parse relationship map (rId -> target file).
@@ -104,7 +92,7 @@ export class DocxConverter implements Converter {
       const child = body.childNodes[i] as Element;
       if (!child) continue;
 
-      if (child.localName === "p") {
+      if (isTag(child, "p")) {
         const para = this.parseParagraph(child, relsMap);
         if (para) {
           children.push(para);
@@ -115,7 +103,7 @@ export class DocxConverter implements Converter {
             });
           }
         }
-      } else if (child.localName === "tbl") {
+      } else if (isTag(child, "tbl")) {
         const table = this.parseTable(child, relsMap);
         if (table) {
           children.push(table);
@@ -232,7 +220,7 @@ export class DocxConverter implements Converter {
     relsMap: Map<string, string>
   ): ParagraphNode | HeadingNode | null {
     const pStyle = this.getParagraphStyle(paraEl);
-    const inlineNodes = this.parseRuns(paraEl, relsMap);
+    const inlineNodes = this.mergeInlineRuns(this.parseRuns(paraEl, relsMap));
 
     // Also gather text from hyperlinks that are direct children of the paragraph.
     const hyperlinkNodes = this.parseHyperlinks(paraEl, relsMap);
@@ -506,5 +494,39 @@ export class DocxConverter implements Converter {
     if (data instanceof ArrayBuffer) return new Uint8Array(data);
     if (data instanceof Blob) return new Uint8Array(await data.arrayBuffer());
     return new TextEncoder().encode(data);
+  }
+
+  /**
+   * Remove empty inline nodes and merge adjacent same-type wrapper nodes to
+   * eliminate `****` / `**text1****text2**` artifacts from OOXML run splitting.
+   */
+  private mergeInlineRuns(nodes: AnyNode[]): AnyNode[] {
+    const filtered = nodes.filter((n) => this.hasInlineContent(n));
+
+    const merged: AnyNode[] = [];
+    for (const node of filtered) {
+      const last = merged[merged.length - 1];
+      if (
+        last &&
+        last.type === node.type &&
+        (node.type === "strong" || node.type === "emphasis" || node.type === "strikethrough")
+      ) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (last as any).children.push(...(node as any).children);
+      } else {
+        merged.push(node);
+      }
+    }
+
+    return merged;
+  }
+
+  /** Returns true if the node contains at least one non-empty text leaf. */
+  private hasInlineContent(node: AnyNode): boolean {
+    if (node.type === "text") return (node as TextNode).value !== "";
+    if ("children" in node && Array.isArray(node.children)) {
+      return (node.children as AnyNode[]).some((c) => this.hasInlineContent(c));
+    }
+    return true;
   }
 }

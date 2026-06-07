@@ -17,9 +17,10 @@ describe("DocxConverter", () => {
     expect(await converter.canConvert({ data: "", fileName: "test.docx" })).toBe(true);
   });
 
-  it("should detect DOCX by PK magic bytes (ZIP)", async () => {
+  it("should NOT match bare ZIP bytes without mimeType/fileName (strict dispatch)", async () => {
+    // ZIP magic is shared by .docx/.xlsx/.pptx/.epub; strict mode refuses to guess.
     const zipHeader = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0]);
-    expect(await converter.canConvert({ data: zipHeader })).toBe(true);
+    expect(await converter.canConvert({ data: zipHeader })).toBe(false);
   });
 
   it("should reject non-DOCX files", async () => {
