@@ -308,10 +308,12 @@ export class HtmlConverter implements Converter {
    * @param el - The paragraph DOM element
    * @returns A ParagraphNode with the processed child content
    */
-  private processParagraph(el: HTMLElement): ParagraphNode {
+  private processParagraph(el: HTMLElement): ParagraphNode | null {
+    const children = this.processChildren(Array.from(el.childNodes));
+    if (children.length === 0) return null;
     return createNode<ParagraphNode>({
       type: "paragraph",
-      children: this.processChildren(Array.from(el.childNodes)),
+      children,
     });
   }
 

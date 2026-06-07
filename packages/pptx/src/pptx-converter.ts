@@ -9,6 +9,8 @@ import type {
 import {
   createNode,
   parseXML,
+  strictCanConvert,
+  checkZipBombRisk,
   DocumentNode,
   HeadingNode,
   ParagraphNode,
@@ -36,28 +38,12 @@ export class PptxConverter implements Converter {
    * @returns True if the input is a supported PPTX.
    */
   async canConvert(input: ConversionInput): Promise<boolean> {
-    if (input.mimeType && this.supportedMimeTypes.includes(input.mimeType)) {
-      return true;
-    }
-    if (input.fileName) {
-      const ext = input.fileName.toLowerCase();
-      if (this.supportedExtensions.some((e) => ext.endsWith(e))) {
-        return true;
-      }
-    }
-    if (input.data instanceof Uint8Array || input.data instanceof ArrayBuffer) {
-      const bytes = input.data instanceof Uint8Array ? input.data : new Uint8Array(input.data);
-      if (
-        bytes.length >= 4 &&
-        bytes[0] === 0x50 &&
-        bytes[1] === 0x4b &&
-        bytes[2] === 0x03 &&
-        bytes[3] === 0x04
-      ) {
-        return true;
-      }
-    }
-    return false;
+    // Strict dispatch: ZIP magic bytes are shared across .docx/.xlsx/.pptx/.epub —
+    // sniffing them here would cause this converter to intercept other formats.
+    return strictCanConvert(input, {
+      mimeTypes: this.supportedMimeTypes,
+      extensions: this.supportedExtensions,
+    });
   }
 
   /**
@@ -75,6 +61,7 @@ export class PptxConverter implements Converter {
     const data = await this.toByteArray(input.data);
     const JSZip = (await import("jszip")).default;
     const zip = await JSZip.loadAsync(data);
+    checkZipBombRisk(zip);
     const renderer = new MarkdownRenderer();
 
     // Parse slide ordering from presentation.xml.

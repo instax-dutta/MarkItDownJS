@@ -11,6 +11,8 @@ import {
   createNode,
   readInputData,
   parseHTML,
+  strictCanConvert,
+  checkZipBombRisk,
   type HeadingNode,
   type ParagraphNode,
   type ListNode,
@@ -691,28 +693,12 @@ export class EpubConverter implements Converter {
    * @returns True if this converter can process the input
    */
   async canConvert(input: ConversionInput): Promise<boolean> {
-    if (input.mimeType && this.supportedMimeTypes.includes(input.mimeType)) {
-      return true;
-    }
-
-    if (input.fileName) {
-      const ext = input.fileName.slice(input.fileName.lastIndexOf(".")).toLowerCase();
-      if (this.supportedExtensions.includes(ext)) {
-        return true;
-      }
-    }
-
-    try {
-      const data = await readInputData(input.data);
-      if (data.length >= 4) {
-        const isZip = data[0] === 0x50 && data[1] === 0x4b && data[2] === 0x03 && data[3] === 0x04;
-        if (isZip) return true;
-      }
-    } catch {
-      return false;
-    }
-
-    return false;
+    // Strict dispatch: ZIP magic bytes are shared across .docx/.xlsx/.pptx/.epub —
+    // sniffing them here would cause this converter to intercept other formats.
+    return strictCanConvert(input, {
+      mimeTypes: this.supportedMimeTypes,
+      extensions: this.supportedExtensions,
+    });
   }
 
   /**
@@ -734,6 +720,7 @@ export class EpubConverter implements Converter {
     const data = await readInputData(input.data);
 
     const zip = await JSZip.loadAsync(data);
+    checkZipBombRisk(zip);
 
     // Step 1: Find OPF path from container.xml
     const opfPath = await getOpfPathFromContainer(zip);

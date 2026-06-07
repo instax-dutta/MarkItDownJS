@@ -1,6 +1,6 @@
 {
   "name": "@markitdownjs/xml",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "XML converter for MarkItDownJS",
   "license": "MIT",
   "type": "module",

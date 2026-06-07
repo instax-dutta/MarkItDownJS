@@ -1,6 +1,6 @@
 {
   "name": "@markitdownjs/json",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "JSON converter for MarkItDownJS",
   "license": "MIT",
   "type": "module",

@@ -67,22 +67,44 @@ export class PdfConverter implements Converter {
     const startTime = Date.now();
     const data = await this.toByteArray(input.data);
     const renderer = new MarkdownRenderer();
+    const opts = input.options ?? {};
+    const ratios = opts.headingSizeRatios ?? {};
 
     let ast: DocumentNode;
     let markdown: string;
     const headings: HeadingInfo[] = [];
     const tables: TableData[] = [];
     let pageCount = 0;
+    let pdfTitle = "";
+    let pdfAuthor = "";
 
     try {
-      const pdfjsLib = await import("pdfjs-dist");
+      // Use the legacy entry — runs under Node.js without a separate worker file.
+      // The non-legacy entry pulls in a Worker constructor reference that crashes
+      // pdfjs's fake-worker bootstrap when Worker is undefined.
+      const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
-      // Disable the worker so we don't need a separate worker file.
-      pdfjsLib.GlobalWorkerOptions.workerSrc = "";
-
-      const loadingTask = pdfjsLib.getDocument({ data });
+      const loadingTask = pdfjsLib.getDocument({
+        data,
+        // pdfjs runs `eval()` in some font/cmap paths; disable for safety + Node compat.
+        isEvalSupported: false,
+        // Inline the worker when no Worker global exists (Node.js).
+        // Not in DocumentInitParameters types but accepted at runtime by the legacy build.
+        ...(typeof Worker === "undefined" ? { disableWorker: true } : {}),
+      } as Parameters<typeof pdfjsLib.getDocument>[0]);
       const pdf = await loadingTask.promise;
       pageCount = pdf.numPages;
+
+      // Extract PDF document metadata when available.
+      try {
+        const meta = await pdf.getMetadata();
+
+        const info = (meta?.info ?? {}) as Record<string, unknown>;
+        pdfTitle = typeof info.Title === "string" ? info.Title : "";
+        pdfAuthor = typeof info.Author === "string" ? info.Author : "";
+      } catch {
+        // Metadata is best-effort.
+      }
 
       const pageNodes: AnyNode[] = [];
 
@@ -132,7 +154,7 @@ export class PdfConverter implements Converter {
           const trimmed = currentLine.trim();
           if (!trimmed) return;
 
-          const heading = this.classifyHeading(trimmed, lastFontSize, bodyFontSize);
+          const heading = this.classifyHeading(trimmed, lastFontSize, bodyFontSize, ratios);
           if (heading) {
             headings.push(heading);
             const level = heading.level as 1 | 2 | 3 | 4 | 5 | 6;
@@ -195,6 +217,20 @@ export class PdfConverter implements Converter {
       });
 
       markdown = renderer.render(ast);
+
+      // Apply post-render options.
+      if (opts.pageBreakMarker) {
+        markdown = markdown.replace(/\n\n---\n\n/g, `\n\n${opts.pageBreakMarker}\n\n`);
+      }
+      if (opts.injectFrontmatter) {
+        const fm: string[] = ["---"];
+        const yamlEscape = (s: string) => s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        if (pdfTitle) fm.push(`title: "${yamlEscape(pdfTitle)}"`);
+        if (pdfAuthor) fm.push(`author: "${yamlEscape(pdfAuthor)}"`);
+        fm.push(`pages: ${pageCount}`);
+        fm.push("---");
+        markdown = fm.join("\n") + "\n\n" + markdown;
+      }
     } catch {
       ast = createNode<DocumentNode>({
         type: "document",
@@ -219,6 +255,8 @@ export class PdfConverter implements Converter {
       markdown,
       metadata: {
         pageCount,
+        ...(pdfTitle && { title: pdfTitle }),
+        ...(pdfAuthor && { author: pdfAuthor }),
         format: "application/pdf",
         source: "pdfjs-dist",
       },
@@ -268,7 +306,8 @@ export class PdfConverter implements Converter {
   private classifyHeading(
     text: string,
     fontSize: number,
-    bodyFontSize: number
+    bodyFontSize: number,
+    ratios: { h1?: number; h2?: number; h3?: number } = {}
   ): HeadingInfo | undefined {
     const trimmed = text.trim();
     if (!trimmed) return undefined;
@@ -276,9 +315,9 @@ export class PdfConverter implements Converter {
     // Use relative sizing when a body font size is known.
     if (bodyFontSize > 0) {
       const ratio = fontSize / bodyFontSize;
-      if (ratio > 1.8) return { level: 1, text: trimmed };
-      if (ratio > 1.4) return { level: 2, text: trimmed };
-      if (ratio > 1.15) return { level: 3, text: trimmed };
+      if (ratio > (ratios.h1 ?? 1.8)) return { level: 1, text: trimmed };
+      if (ratio > (ratios.h2 ?? 1.4)) return { level: 2, text: trimmed };
+      if (ratio > (ratios.h3 ?? 1.15)) return { level: 3, text: trimmed };
       return undefined;
     }
 
@@ -295,9 +334,18 @@ export class PdfConverter implements Converter {
    * @returns The data as a Uint8Array.
    */
   private async toByteArray(data: Uint8Array | ArrayBuffer | Blob | string): Promise<Uint8Array> {
-    if (data instanceof Uint8Array) return data;
+    if (data instanceof Uint8Array) {
+      // Node.js Buffer is a Uint8Array subclass, but pdfjs-dist v4+ rejects it with
+      // "Please provide binary data as Uint8Array, rather than Buffer." Re-wrap so
+      // the constructor is exactly Uint8Array.
+      return data.constructor === Uint8Array
+        ? data
+        : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+    }
     if (data instanceof ArrayBuffer) return new Uint8Array(data);
-    if (data instanceof Blob) return new Uint8Array(await data.arrayBuffer());
-    return new TextEncoder().encode(data);
+    if (typeof Blob !== "undefined" && data instanceof Blob) {
+      return new Uint8Array(await data.arrayBuffer());
+    }
+    return new TextEncoder().encode(data as string);
   }
 }

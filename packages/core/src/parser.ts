@@ -5,6 +5,8 @@ import { MarkdownRenderer } from "./renderer.js";
 
 export interface MarkItDownOptions {
   registry?: ConverterRegistry;
+  /** Auto-register all installed @markitdownjs/* converter packages. */
+  preset?: "all";
 }
 
 export class MarkItDown {
@@ -15,6 +17,46 @@ export class MarkItDown {
     const registry = options?.registry ?? new DefaultConverterRegistry();
     this.pipeline = new DocumentPipeline(registry);
     this.renderer = new MarkdownRenderer();
+  }
+
+  /**
+   * Async factory that optionally auto-registers all installed converter packages.
+   *
+   * @example
+   * const parser = await MarkItDown.create({ preset: "all" });
+   */
+  static async create(options?: MarkItDownOptions): Promise<MarkItDown> {
+    const instance = new MarkItDown(options);
+    if (options?.preset === "all") {
+      await instance._loadConverterPresets();
+    }
+    return instance;
+  }
+
+  private async _loadConverterPresets(): Promise<void> {
+    const pkgs: [string, string][] = [
+      ["@markitdownjs/pdf", "PdfConverter"],
+      ["@markitdownjs/docx", "DocxConverter"],
+      ["@markitdownjs/xlsx", "XlsxConverter"],
+      ["@markitdownjs/pptx", "PptxConverter"],
+      ["@markitdownjs/epub", "EpubConverter"],
+      ["@markitdownjs/html", "HtmlConverter"],
+      ["@markitdownjs/csv", "CsvConverter"],
+      ["@markitdownjs/json", "JsonConverter"],
+      ["@markitdownjs/xml", "XmlConverter"],
+      ["@markitdownjs/archive", "ArchiveConverter"],
+      ["@markitdownjs/image-ocr", "OcrConverter"],
+      ["@markitdownjs/audio", "AudioConverter"],
+    ];
+    for (const [pkg, cls] of pkgs) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mod = (await import(pkg)) as Record<string, new () => any>;
+        if (mod[cls]) this.getRegistry().register(new mod[cls]!());
+      } catch {
+        // Package not installed — skip silently.
+      }
+    }
   }
 
   getRegistry(): ConverterRegistry {

@@ -74,6 +74,12 @@ export interface ConversionOptions {
   signal?: AbortSignal;
   /** Chunking configuration for RAG workflows */
   chunking?: ChunkingOptions;
+  /** Custom page break marker rendered between PDF pages (default: "---"). */
+  pageBreakMarker?: string;
+  /** Prepend YAML frontmatter with title/author/pages to PDF output. */
+  injectFrontmatter?: boolean;
+  /** Override heading size ratio thresholds for PDF heading classification. */
+  headingSizeRatios?: { h1?: number; h2?: number; h3?: number };
 }
 
 export type OutputFormat = "markdown" | "json" | "plaintext" | "html";
