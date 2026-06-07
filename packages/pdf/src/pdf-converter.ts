@@ -224,8 +224,9 @@ export class PdfConverter implements Converter {
       }
       if (opts.injectFrontmatter) {
         const fm: string[] = ["---"];
-        if (pdfTitle) fm.push(`title: "${pdfTitle.replace(/"/g, '\\"')}"`);
-        if (pdfAuthor) fm.push(`author: "${pdfAuthor.replace(/"/g, '\\"')}"`);
+        const yamlEscape = (s: string) => s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        if (pdfTitle) fm.push(`title: "${yamlEscape(pdfTitle)}"`);
+        if (pdfAuthor) fm.push(`author: "${yamlEscape(pdfAuthor)}"`);
         fm.push(`pages: ${pageCount}`);
         fm.push("---");
         markdown = fm.join("\n") + "\n\n" + markdown;
