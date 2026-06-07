@@ -1,6 +1,6 @@
 {
   "name": "@markitdownjs/image-ocr",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Image OCR converter for MarkItDownJS",
   "license": "MIT",
   "type": "module",
