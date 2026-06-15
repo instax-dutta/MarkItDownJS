@@ -25,7 +25,7 @@
   "dependencies": {
     "@markitdownjs/core": "workspace:*",
     "@markitdownjs/shared": "workspace:*",
-    "hono": "^4.0.0"
+    "hono": "^4.12.25"
   },
   "devDependencies": {
     "typescript": "^5.5.0",
