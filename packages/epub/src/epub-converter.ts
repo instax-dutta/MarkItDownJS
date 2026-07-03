@@ -29,6 +29,7 @@ import {
   type TableCellNode,
   type InlineCodeNode,
   type ThematicBreakNode,
+  type SectionNode,
 } from "@markitdownjs/shared";
 import JSZip from "jszip";
 
@@ -265,6 +266,67 @@ async function getDOMParser(): Promise<{ new (): DOMParser; prototype: DOMParser
   throw new Error(
     "DOMParser is not available. Install 'linkedom' for Node.js support: npm install linkedom"
   );
+}
+
+// ─── NCX (Table of Contents) Parsing ──────────────────────────────────────────
+
+/** A single NCX navigation point (chapter/section entry). */
+interface NcxNavPoint {
+  title: string;
+  src: string;
+  children: NcxNavPoint[];
+}
+
+/**
+ * Parses the NCX (table of contents) file from an EPUB archive.
+ * Returns navigation points that map chapter titles to content file paths.
+ *
+ * @param zip - The JSZip instance containing the EPUB
+ * @param opf - The parsed OPF package
+ * @returns An array of top-level navigation points
+ */
+async function parseNcx(zip: JSZip, opf: OpfPackage): Promise<NcxNavPoint[]> {
+  // Find the NCX file from the manifest.
+  let ncxHref: string | undefined;
+  for (const item of opf.manifest.values()) {
+    if (item.mediaType === "application/x-dtbncx+xml") {
+      ncxHref = item.href;
+      break;
+    }
+  }
+  if (!ncxHref) return [];
+
+  const ncxFile = zip.file(ncxHref);
+  if (!ncxFile) return [];
+
+  const ncxXml = await ncxFile.async("string");
+  const doc = await parseXMLString(ncxXml);
+
+  const navPoints = doc.querySelectorAll("navMap > navPoint");
+  return Array.from(navPoints).map((np) => parseNavPoint(np, ncxHref!));
+}
+
+/**
+ * Recursively parses a navPoint element into an NcxNavPoint.
+ */
+function parseNavPoint(el: Element, _ncxDir: string): NcxNavPoint {
+  const titleEl = el.querySelector("navLabel > text");
+  const contentEl = el.querySelector("content");
+  const title = titleEl?.textContent?.trim() ?? "";
+  const src = contentEl?.getAttribute("src") ?? "";
+
+  const childPoints = Array.from(el.querySelectorAll(":scope > navPoint"))
+    .map((child) => parseNavPoint(child, _ncxDir));
+
+  return { title, src, children: childPoints };
+}
+
+/**
+ * Strips the fragment identifier from a URL (e.g., "chapter1.xhtml#sec1" → "chapter1.xhtml").
+ */
+function stripFragment(src: string): string {
+  const hashIdx = src.indexOf("#");
+  return hashIdx >= 0 ? src.substring(0, hashIdx) : src;
 }
 
 // ─── XHTML Content Processing ─────────────────────────────────────────────────
@@ -602,6 +664,17 @@ function renderNode(node: AnyNode): string {
     }
     case "thematic-break":
       return "---";
+    case "section": {
+      const n = node as SectionNode;
+      const parts: string[] = [];
+      if (n.title) {
+        parts.push(`## ${n.title}`);
+      }
+      if (n.children) {
+        parts.push(renderNodes(n.children));
+      }
+      return parts.join("\n\n");
+    }
     default:
       if ("children" in node && Array.isArray(node.children)) {
         return renderNodes(node.children);
@@ -740,6 +813,22 @@ export class EpubConverter implements Converter {
       }
     }
 
+    // Step 3.5: Parse NCX for chapter boundaries.
+    const ncxNavPoints = await parseNcx(zip, opf);
+
+    // Build a map from content file path → chapter title (from NCX).
+    const chapterTitles = new Map<string, string>();
+    const buildChapterMap = (points: NcxNavPoint[]) => {
+      for (const point of points) {
+        const contentFile = stripFragment(point.src);
+        if (contentFile && !chapterTitles.has(contentFile)) {
+          chapterTitles.set(contentFile, point.title);
+        }
+        buildChapterMap(point.children);
+      }
+    };
+    buildChapterMap(ncxNavPoints);
+
     // Step 4: Process each XHTML content file in spine order
     const allChildren: AnyNode[] = [];
     const headings: HeadingInfo[] = [];
@@ -755,6 +844,13 @@ export class EpubConverter implements Converter {
 
       const chapterNodes = processChildNodes(Array.from(body.childNodes));
 
+      // Filter out blank/boilerplate pages (pages with no meaningful text).
+      const textContent = chapterNodes
+        .map((n) => extractNodeText(n))
+        .join("")
+        .trim();
+      if (textContent.length < 10) continue; // Skip blank pages
+
       // Collect headings for the ConversionResult
       for (const node of chapterNodes) {
         if (node.type === "heading") {
@@ -767,7 +863,20 @@ export class EpubConverter implements Converter {
         }
       }
 
-      allChildren.push(...chapterNodes);
+      // Wrap in SectionNode if we have a chapter title from NCX.
+      const href = item.href;
+      const chapterTitle = chapterTitles.get(href);
+      if (chapterTitle && chapterNodes.length > 0) {
+        allChildren.push(
+          createNode<SectionNode>({
+            type: "section",
+            title: chapterTitle,
+            children: chapterNodes,
+          })
+        );
+      } else {
+        allChildren.push(...chapterNodes);
+      }
     }
 
     // Step 5: Build the complete document node

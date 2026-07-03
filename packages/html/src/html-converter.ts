@@ -31,6 +31,12 @@ import {
 } from "@markitdownjs/shared";
 
 /**
+ * Regex for decorative/tracking image patterns.
+ * Matches src attributes containing common tracking pixels, badges, and icons.
+ */
+const DECORATIVE_IMG_RE = /pixel|tracking|spacer|blank|1x1|badge|icon|spinner|logo|avatar|thumb|loading/i;
+
+/**
  * Regex for footnote-like CSS class names.
  * Matches class attributes containing 'footnote', 'foot', 'note', or 'fn'.
  */
@@ -222,6 +228,9 @@ export class HtmlConverter implements Converter {
         return this.processLink(el);
       case "img":
         return this.processImage(el);
+      case "svg":
+        // Strip decorative SVGs (icons, badges, tracking images).
+        return null;
       case "pre":
         return this.processPreformatted(el);
       case "strong":
@@ -275,11 +284,17 @@ export class HtmlConverter implements Converter {
       case "section":
       case "article":
       case "main":
-      case "header":
-      case "footer":
-      case "nav":
       case "fieldset":
         return this.processChildren(Array.from(el.childNodes));
+      case "nav":
+        // Strip navigation bars — not part of main content.
+        return null;
+      case "header":
+        // Strip page headers — not part of main content.
+        return null;
+      case "footer":
+        // Strip page footers — not part of main content.
+        return null;
       default:
         return this.processChildren(Array.from(el.childNodes));
     }
@@ -440,18 +455,26 @@ export class HtmlConverter implements Converter {
    * @param el - The image DOM element
    * @returns An ImageNode with the image metadata
    */
-  private processImage(el: HTMLElement): ImageNode {
+  private processImage(el: HTMLElement): ImageNode | null {
+    const src = el.getAttribute("src") ?? "";
+
+    // Strip decorative/tracking images (tracking pixels, 1x1 images, icons).
+    if (DECORATIVE_IMG_RE.test(src)) return null;
+    const width = el.hasAttribute("width") ? parseInt(el.getAttribute("width") ?? "0") || undefined : undefined;
+    const height = el.hasAttribute("height") ? parseInt(el.getAttribute("height") ?? "0") || undefined : undefined;
+    if (width === 1 && height === 1) return null; // Tracking pixel
+    if (src.startsWith("data:") && src.includes("base64,")) {
+      const dataPart = src.split("base64,")[1] ?? "";
+      if (dataPart.length < 100) return null; // Tiny inline data (spacer)
+    }
+
     return createNode<ImageNode>({
       type: "image",
-      src: el.getAttribute("src") ?? "",
+      src,
       alt: el.getAttribute("alt") ?? undefined,
       title: el.getAttribute("title") ?? undefined,
-      width: el.hasAttribute("width")
-        ? parseInt(el.getAttribute("width") ?? "0") || undefined
-        : undefined,
-      height: el.hasAttribute("height")
-        ? parseInt(el.getAttribute("height") ?? "0") || undefined
-        : undefined,
+      width,
+      height,
     });
   }
 

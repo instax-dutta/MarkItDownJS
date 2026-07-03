@@ -1,4 +1,4 @@
-import type { ConversionInput, ConversionResult, ConverterRegistry } from "@markitdownjs/shared";
+import type { ConversionInput, ConversionResult, ConversionWarning, ConverterRegistry } from "@markitdownjs/shared";
 import { ConversionError, CancellationError } from "@markitdownjs/shared";
 import { checkSignal, readInputData } from "@markitdownjs/shared";
 import { DefaultConverterRegistry } from "./registry.js";
@@ -53,11 +53,21 @@ export class DocumentPipeline {
       result = await converter.convert(processedInput);
     } catch (error) {
       if (error instanceof CancellationError) throw error;
-      throw new ConversionError(
-        `Converter "${converter.id}" failed: ${error instanceof Error ? error.message : String(error)}`,
-        converter.id,
-        error instanceof Error ? error : undefined
-      );
+      // Check if the converter set any partial result/warnings before throwing
+      const partialResult = (error as any).partialResult as ConversionResult | undefined;
+      const partialWarnings = (error as any).warnings as ConversionWarning[] | undefined;
+      if (partialResult) {
+        result = partialResult;
+        if (partialWarnings) {
+          result.warnings = [...(result.warnings ?? []), ...partialWarnings];
+        }
+      } else {
+        throw new ConversionError(
+          `Converter "${converter.id}" failed: ${error instanceof Error ? error.message : String(error)}`,
+          converter.id,
+          error instanceof Error ? error : undefined
+        );
+      }
     }
 
     for (const middleware of middlewares) {

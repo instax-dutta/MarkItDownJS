@@ -2,6 +2,7 @@ import type {
   Converter,
   ConversionInput,
   ConversionResult,
+  ConversionWarning,
   HeadingInfo,
   TableData,
   AnyNode,
@@ -22,6 +23,7 @@ import {
   EmphasisNode,
   LinkNode,
   StrikethroughNode,
+  ImageNode,
 } from "@markitdownjs/shared";
 import { MarkdownRenderer } from "@markitdownjs/ast";
 import { isTag } from "./utils.js";
@@ -66,6 +68,9 @@ export class DocxConverter implements Converter {
     const zip = await JSZip.loadAsync(data);
     checkZipBombRisk(zip);
     const renderer = new MarkdownRenderer();
+    const warnings: ConversionWarning[] = [];
+    const opts = input.options ?? {};
+    const includeComments = (opts.customProperties?.includeComments as boolean) ?? false;
 
     // Parse relationship map (rId -> target file).
     const relsMap = await this.parseRelationships(zip);
@@ -84,6 +89,7 @@ export class DocxConverter implements Converter {
       throw new Error("Invalid DOCX: no body element found");
     }
 
+    // Process document body.
     const children: AnyNode[] = [];
     const headings: HeadingInfo[] = [];
     const tables: TableData[] = [];
@@ -91,6 +97,14 @@ export class DocxConverter implements Converter {
     for (let i = 0; i < body.childNodes.length; i++) {
       const child = body.childNodes[i] as Element;
       if (!child) continue;
+
+      // Strip track changes / comments unless includeComments is enabled.
+      if (!includeComments) {
+        const tag = child.tagName?.toLowerCase();
+        if (tag === "w:sectpr" || tag === "w:commentRangeStart" || tag === "w:commentRangeEnd") {
+          continue;
+        }
+      }
 
       if (isTag(child, "p")) {
         const para = this.parseParagraph(child, relsMap);
@@ -134,6 +148,7 @@ export class DocxConverter implements Converter {
         inputSize: data.length,
         outputSize: markdown.length,
       },
+      warnings: warnings.length > 0 ? warnings : undefined,
     };
   }
 
@@ -267,13 +282,23 @@ export class DocxConverter implements Converter {
    * @param _relsMap - Relationship mapping (unused for runs, kept for signature).
    * @returns An array of inline AST nodes.
    */
-  private parseRuns(paraEl: Element, _relsMap: Map<string, string>): AnyNode[] {
+  private parseRuns(paraEl: Element, relsMap: Map<string, string>): AnyNode[] {
     const nodes: AnyNode[] = [];
     const runs = paraEl.getElementsByTagName("w:r");
 
     for (let i = 0; i < runs.length; i++) {
       const run = runs.item(i);
       if (!run) continue;
+
+      // Check for inline images in <w:drawing> elements.
+      const drawing = run.getElementsByTagName("w:drawing")[0];
+      if (drawing) {
+        const imageNode = this.parseDrawing(drawing, relsMap);
+        if (imageNode) {
+          nodes.push(imageNode);
+          continue;
+        }
+      }
 
       const textEl = run.getElementsByTagName("w:t")[0];
       if (!textEl) continue;
@@ -314,6 +339,63 @@ export class DocxConverter implements Converter {
     }
 
     return nodes;
+  }
+
+  /**
+   * Parse a w:drawing element to extract an inline image.
+   *
+   * Looks for the relationship ID in wp:docPr or a:blip, resolves it via
+   * the relationship map, and reads the image data from the zip archive.
+   *
+   * @param drawingEl - The w:drawing XML element.
+   * @param relsMap - Relationship ID to target path mapping.
+   * @returns An ImageNode, or null if the image cannot be extracted.
+   */
+  private parseDrawing(drawingEl: Element, relsMap: Map<string, string>): ImageNode | null {
+    // Try wp:inline first (most common for inline images).
+    const inline = drawingEl.getElementsByTagName("wp:inline")[0];
+    if (!inline) return null;
+
+    // Extract alt text from wp:docPr.
+    const docPr = inline.getElementsByTagName("wp:docPr")[0];
+    const alt = docPr?.getAttribute("title") ?? docPr?.getAttribute("descr") ?? undefined;
+
+    // Find the blip element for the relationship ID.
+    const blip = inline.getElementsByTagName("a:blip")[0];
+    const rid = blip?.getAttribute("r:embed") ?? blip?.getAttribute("r:link") ?? "";
+    if (!rid) return null;
+
+    const target = relsMap.get(rid);
+    if (!target) return null;
+
+    // Build the image path (relative to word/ directory).
+    const imagePath = target.startsWith("/") ? target : `word/${target}`;
+
+    return createNode<ImageNode>({
+      type: "image",
+      src: imagePath,
+      alt,
+      mimeType: this.guessImageMimeType(target),
+    });
+  }
+
+  /**
+   * Guess the MIME type from a file extension.
+   */
+  private guessImageMimeType(path: string): string {
+    const ext = path.split(".").pop()?.toLowerCase();
+    switch (ext) {
+      case "png": return "image/png";
+      case "jpg":
+      case "jpeg": return "image/jpeg";
+      case "gif": return "image/gif";
+      case "bmp": return "image/bmp";
+      case "tiff":
+      case "tif": return "image/tiff";
+      case "emf": return "image/emf";
+      case "wmf": return "image/wmf";
+      default: return "image/png";
+    }
   }
 
   /**

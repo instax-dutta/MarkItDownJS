@@ -39,6 +39,7 @@ interface CellData {
   type: string;
   row: number;
   col: number;
+  formula?: string;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -316,7 +317,9 @@ export class XlsxConverter implements Converter {
         const ref = cellEl.getAttribute("r") ?? "";
         const type = cellEl.getAttribute("t") ?? "";
         const vEl = cellEl.getElementsByTagName("v")[0];
+        const fEl = cellEl.getElementsByTagName("f")[0];
         let rawValue = vEl?.textContent ?? "";
+        const formula = fEl?.textContent ?? undefined;
 
         // Resolve shared strings.
         if (type === "s" && rawValue) {
@@ -327,6 +330,11 @@ export class XlsxConverter implements Converter {
         // Handle boolean type.
         if (type === "b") {
           rawValue = rawValue === "1" ? "TRUE" : "FALSE";
+        }
+
+        // If formula exists but no cached value, use formula string.
+        if (formula && !rawValue) {
+          rawValue = `[Formula: ${formula}]`;
         }
 
         // Parse cell position.
@@ -342,6 +350,7 @@ export class XlsxConverter implements Converter {
           type,
           row,
           col,
+          formula,
         });
       }
     }

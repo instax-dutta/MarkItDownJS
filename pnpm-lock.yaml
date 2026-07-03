@@ -239,6 +239,29 @@ importers:
         specifier: ^5.5.0
         version: 5.9.3
 
+  packages/optimizer:
+    dependencies:
+      '@markitdownjs/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+
+  packages/pack:
+    dependencies:
+      '@markitdownjs/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+
   packages/pdf:
     dependencies:
       '@markitdownjs/ast':

@@ -2,6 +2,7 @@ import type {
   Converter,
   ConversionInput,
   ConversionResult,
+  ConversionWarning,
   HeadingInfo,
   TableData,
   AnyNode,
@@ -13,8 +14,29 @@ import {
   ParagraphNode,
   TextNode,
   PageBreakNode,
+  TableNode,
+  TableRowNode,
+  TableCellNode,
 } from "@markitdownjs/shared";
 import { MarkdownRenderer } from "@markitdownjs/ast";
+
+interface TextItem {
+  str: string;
+  transform: number[];
+  fontSize: number;
+}
+
+interface ColumnGroup {
+  xMin: number;
+  xMax: number;
+  items: TextItem[];
+}
+
+/** Minimum text items per page to consider a PDF as having a text layer */
+const SCANNED_PDF_THRESHOLD = 5;
+
+/** Minimum x-gap (in PDF units) to consider items as separate columns */
+const COLUMN_GAP_THRESHOLD = 50;
 
 /** Convert PDF files to markdown via AST-first processing. */
 export class PdfConverter implements Converter {
@@ -22,11 +44,6 @@ export class PdfConverter implements Converter {
   readonly supportedMimeTypes = ["application/pdf"];
   readonly supportedExtensions = [".pdf"];
 
-  /**
-   * Determine whether this converter can handle the given input.
-   * @param input - The conversion input to inspect.
-   * @returns True if the input is a supported PDF.
-   */
   async canConvert(input: ConversionInput): Promise<boolean> {
     if (input.mimeType && this.supportedMimeTypes.includes(input.mimeType)) {
       return true;
@@ -52,23 +69,13 @@ export class PdfConverter implements Converter {
     return false;
   }
 
-  /**
-   * Convert a PDF document into markdown via an AST intermediate.
-   *
-   * The converter dynamically imports pdfjs-dist, disables the worker, loads
-   * the PDF, and walks every page extracting text with positional data,
-   * annotations (links), and font-size information for heading detection.
-   * An AST is assembled first and then rendered to markdown.
-   *
-   * @param input - The conversion input containing PDF data.
-   * @returns A complete ConversionResult with markdown, AST, and metadata.
-   */
   async convert(input: ConversionInput): Promise<ConversionResult> {
     const startTime = Date.now();
     const data = await this.toByteArray(input.data);
     const renderer = new MarkdownRenderer();
     const opts = input.options ?? {};
     const ratios = opts.headingSizeRatios ?? {};
+    const warnings: ConversionWarning[] = [];
 
     let ast: DocumentNode;
     let markdown: string;
@@ -79,26 +86,18 @@ export class PdfConverter implements Converter {
     let pdfAuthor = "";
 
     try {
-      // Use the legacy entry — runs under Node.js without a separate worker file.
-      // The non-legacy entry pulls in a Worker constructor reference that crashes
-      // pdfjs's fake-worker bootstrap when Worker is undefined.
       const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
       const loadingTask = pdfjsLib.getDocument({
         data,
-        // pdfjs runs `eval()` in some font/cmap paths; disable for safety + Node compat.
         isEvalSupported: false,
-        // Inline the worker when no Worker global exists (Node.js).
-        // Not in DocumentInitParameters types but accepted at runtime by the legacy build.
         ...(typeof Worker === "undefined" ? { disableWorker: true } : {}),
       } as Parameters<typeof pdfjsLib.getDocument>[0]);
       const pdf = await loadingTask.promise;
       pageCount = pdf.numPages;
 
-      // Extract PDF document metadata when available.
       try {
         const meta = await pdf.getMetadata();
-
         const info = (meta?.info ?? {}) as Record<string, unknown>;
         pdfTitle = typeof info.Title === "string" ? info.Title : "";
         pdfAuthor = typeof info.Author === "string" ? info.Author : "";
@@ -113,17 +112,34 @@ export class PdfConverter implements Converter {
         const textContent = await page.getTextContent();
         const annotations = await page.getAnnotations();
 
-        // Collect font sizes for heading classification.
-        const fontSizes = new Map<number, number>();
+        // Collect text items with positional data.
+        const textItems: TextItem[] = [];
         for (const item of textContent.items) {
           if (!("str" in item) || !item.str) continue;
-          const fontSize = this.extractFontSize(item);
-          if (fontSize > 0) {
-            fontSizes.set(fontSize, (fontSizes.get(fontSize) ?? 0) + 1);
+          textItems.push({
+            str: item.str,
+            transform: (item as any).transform ?? [1, 0, 0, 1, 0, 0],
+            fontSize: this.extractFontSize(item as Record<string, unknown>),
+          });
+        }
+
+        // Scanned PDF detection: check text density on first page.
+        if (pageNum === 1 && textItems.length < SCANNED_PDF_THRESHOLD) {
+          warnings.push({
+            converter: this.id,
+            message: `Page 1 has only ${textItems.length} text items — this may be a scanned/image PDF. Consider using @markitdownjs/image-ocr for better results.`,
+            severity: "warning",
+          });
+        }
+
+        // Collect font sizes for heading classification.
+        const fontSizes = new Map<number, number>();
+        for (const item of textItems) {
+          if (item.fontSize > 0) {
+            fontSizes.set(item.fontSize, (fontSizes.get(item.fontSize) ?? 0) + 1);
           }
         }
 
-        // Determine the body font size (most common).
         let bodyFontSize = 0;
         let maxCount = 0;
         for (const [size, count] of fontSizes) {
@@ -138,69 +154,48 @@ export class PdfConverter implements Converter {
         for (const annot of annotations) {
           if (annot.subtype === "Link" && annot.url) {
             const rect = annot.rect;
-            // Store by approximate bounding box for lookup.
             const key = `${Math.round(rect[0])},${Math.round(rect[1])},${Math.round(rect[2])},${Math.round(rect[3])}`;
             linkMap.set(key, annot.url);
           }
         }
 
-        // Group text items into logical lines / paragraphs.
-        const items = textContent.items;
-        let currentLine = "";
-        let lastFontSize = 0;
-        let lastY = 0;
+        // Detect multi-column layout.
+        const columns = this.detectColumns(textItems);
 
-        const flushLine = () => {
-          const trimmed = currentLine.trim();
-          if (!trimmed) return;
-
-          const heading = this.classifyHeading(trimmed, lastFontSize, bodyFontSize, ratios);
-          if (heading) {
-            headings.push(heading);
-            const level = heading.level as 1 | 2 | 3 | 4 | 5 | 6;
-            pageNodes.push(
-              createNode<HeadingNode>({
-                type: "heading",
-                level,
-                children: [createNode<TextNode>({ type: "text", value: heading.text })],
-              })
+        if (columns.length > 1) {
+          // Multi-column: process each column's items in reading order.
+          for (const col of columns) {
+            const colNodes = this.processTextItems(
+              col.items,
+              bodyFontSize,
+              ratios,
+              headings,
+              linkMap
             );
-          } else {
-            pageNodes.push(
-              createNode<ParagraphNode>({
-                type: "paragraph",
-                children: [createNode<TextNode>({ type: "text", value: trimmed })],
-              })
-            );
+            pageNodes.push(...colNodes);
           }
-          currentLine = "";
-        };
-
-        for (const item of items) {
-          if (!("str" in item)) continue;
-          const str = item.str;
-          if (!str) continue;
-
-          const fontSize = this.extractFontSize(item);
-          const y = "transform" in item && item.transform ? item.transform[5] : 0;
-
-          // New line when Y position changes significantly or font size changes.
-          if (
-            currentLine &&
-            (Math.abs(y - lastY) > fontSize * 0.5 ||
-              (fontSize !== lastFontSize && lastFontSize > 0))
-          ) {
-            flushLine();
-          }
-
-          currentLine += str;
-          lastFontSize = fontSize;
-          lastY = y;
+        } else {
+          // Single column: original behavior.
+          const colNodes = this.processTextItems(
+            textItems,
+            bodyFontSize,
+            ratios,
+            headings,
+            linkMap
+          );
+          pageNodes.push(...colNodes);
         }
 
-        flushLine();
+        // Detect and emit tables if grid-aligned text is found.
+        const detectedTables = this.detectTables(textItems);
+        for (const tableData of detectedTables) {
+          tables.push(tableData);
+          const tableNode = this.buildTableNode(tableData);
+          if (tableNode) {
+            pageNodes.push(tableNode);
+          }
+        }
 
-        // Add page break between pages (not after the last page).
         if (pageNum < pdf.numPages) {
           pageNodes.push(
             createNode<PageBreakNode>({
@@ -218,7 +213,6 @@ export class PdfConverter implements Converter {
 
       markdown = renderer.render(ast);
 
-      // Apply post-render options.
       if (opts.pageBreakMarker) {
         markdown = markdown.replace(/\n\n---\n\n/g, `\n\n${opts.pageBreakMarker}\n\n`);
       }
@@ -231,7 +225,14 @@ export class PdfConverter implements Converter {
         fm.push("---");
         markdown = fm.join("\n") + "\n\n" + markdown;
       }
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      warnings.push({
+        converter: this.id,
+        message: `PDF parsing failed: ${message}`,
+        severity: "error",
+      });
+
       ast = createNode<DocumentNode>({
         type: "document",
         children: [
@@ -275,18 +276,248 @@ export class PdfConverter implements Converter {
         outputSize: markdown.length,
         pagesProcessed: pageCount,
       },
+      warnings: warnings.length > 0 ? warnings : undefined,
     };
   }
 
   /**
-   * Extract the font size from a PDF text item's transform matrix.
-   *
-   * The transform array is `[scaleX, skewX, skewY, scaleY, x, y]`.
-   * The font size is derived from the absolute value of `scaleX`.
-   *
-   * @param item - A PDF text content item.
-   * @returns The detected font size, or 0 if unavailable.
+   * Detect multi-column layout by clustering text items by x-coordinate.
+   * Returns column groups sorted left-to-right.
    */
+  private detectColumns(items: TextItem[]): ColumnGroup[] {
+    if (items.length === 0) return [];
+
+    // Extract x-positions from transform arrays.
+    const positions = items.map((item) => ({
+      item,
+      x: item.transform[4] ?? 0,
+    }));
+
+    // Sort by x position.
+    positions.sort((a, b) => a.x - b.x);
+
+    // Find gaps larger than threshold to split columns.
+    const posGroups: { item: TextItem; x: number }[][] = [[positions[0]!]];
+    for (let i = 1; i < positions.length; i++) {
+      const prev = positions[i - 1]!;
+      const curr = positions[i]!;
+      if (curr.x - prev.x > COLUMN_GAP_THRESHOLD) {
+        posGroups.push([curr]);
+      } else {
+        posGroups[posGroups.length - 1]!.push(curr);
+      }
+    }
+
+    if (posGroups.length <= 1) {
+      // Single column — return all items as one group.
+      return [{ xMin: 0, xMax: 0, items }];
+    }
+
+    return posGroups.map((group) => ({
+      xMin: Math.min(...group.map((p) => p.x)),
+      xMax: Math.max(...group.map((p) => p.x)),
+      items: group.map((p) => p.item),
+    }));
+  }
+
+  /**
+   * Process a list of text items into AST nodes (headings and paragraphs).
+   */
+  private processTextItems(
+    items: TextItem[],
+    bodyFontSize: number,
+    ratios: { h1?: number; h2?: number; h3?: number },
+    headings: HeadingInfo[],
+    _linkMap: Map<string, string>
+  ): AnyNode[] {
+    const nodes: AnyNode[] = [];
+    let currentLine = "";
+    let lastFontSize = 0;
+    let lastY = 0;
+
+    const flushLine = () => {
+      const trimmed = currentLine.trim();
+      if (!trimmed) return;
+
+      const heading = this.classifyHeading(trimmed, lastFontSize, bodyFontSize, ratios);
+      if (heading) {
+        headings.push(heading);
+        const level = heading.level as 1 | 2 | 3 | 4 | 5 | 6;
+        nodes.push(
+          createNode<HeadingNode>({
+            type: "heading",
+            level,
+            children: [createNode<TextNode>({ type: "text", value: heading.text })],
+          })
+        );
+      } else {
+        nodes.push(
+          createNode<ParagraphNode>({
+            type: "paragraph",
+            children: [createNode<TextNode>({ type: "text", value: trimmed })],
+          })
+        );
+      }
+      currentLine = "";
+    };
+
+    for (const item of items) {
+      if (!item.str) continue;
+
+      const fontSize = item.fontSize;
+      const y = item.transform[5] ?? 0;
+
+      if (
+        currentLine &&
+        (Math.abs(y - lastY) > fontSize * 0.5 ||
+          (fontSize !== lastFontSize && lastFontSize > 0))
+      ) {
+        flushLine();
+      }
+
+      currentLine += item.str;
+      lastFontSize = fontSize;
+      lastY = y;
+    }
+
+    flushLine();
+    return nodes;
+  }
+
+  /**
+   * Detect tables by finding text items that align on consistent x-positions
+   * across multiple rows.
+   */
+  private detectTables(items: TextItem[]): TableData[] {
+    if (items.length < 6) return []; // Need at least 6 items for a 2x3 table
+
+    // Group items by approximate y-position (same row).
+    const rows = this.groupByRow(items);
+    if (rows.length < 2) return [];
+
+    // Find x-positions that appear across multiple rows.
+    const xBuckets = new Map<number, number>(); // x-bucket -> count of rows
+    for (const row of rows) {
+      const uniqueXs = new Set<number>();
+      for (const item of row) {
+        const xBucket = Math.round((item.transform[4] ?? 0) / 10) * 10; // bucket by 10 units
+        uniqueXs.add(xBucket);
+      }
+      for (const x of uniqueXs) {
+        xBuckets.set(x, (xBuckets.get(x) ?? 0) + 1);
+      }
+    }
+
+    // Columns must appear in at least half the rows.
+    const minRowCount = Math.ceil(rows.length * 0.5);
+    const columnXs = Array.from(xBuckets.entries())
+      .filter(([_, count]) => count >= minRowCount)
+      .map(([x]) => x)
+      .sort((a, b) => a - b);
+
+    if (columnXs.length < 2) return []; // Need at least 2 columns for a table
+
+    // Build the table grid.
+    const tableRows: string[][] = [];
+    for (const row of rows) {
+      const cells: string[] = new Array(columnXs.length).fill("");
+      for (const item of row) {
+        const x = item.transform[4] ?? 0;
+        // Find closest column.
+        let bestCol = 0;
+        let bestDist = Infinity;
+        for (let c = 0; c < columnXs.length; c++) {
+          const dist = Math.abs(x - columnXs[c]!);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestCol = c;
+          }
+        }
+        if (bestDist < 30) {
+          cells[bestCol] = cells[bestCol] ? cells[bestCol] + " " + item.str : item.str;
+        }
+      }
+      if (cells.some((c) => c.trim() !== "")) {
+        tableRows.push(cells);
+      }
+    }
+
+    if (tableRows.length < 2) return [];
+
+    const headers = tableRows[0]!;
+    const dataRows = tableRows.slice(1);
+
+    return [
+      {
+        headers,
+        rows: dataRows,
+      },
+    ];
+  }
+
+  /**
+   * Group text items into rows by approximate y-position.
+   */
+  private groupByRow(items: TextItem[]): TextItem[][] {
+    const sorted = [...items].sort((a, b) => (b.transform[5] ?? 0) - (a.transform[5] ?? 0));
+    const rows: TextItem[][] = [];
+    let currentRow: TextItem[] = [sorted[0]!];
+    let lastY = sorted[0]!.transform[5] ?? 0;
+
+    for (let i = 1; i < sorted.length; i++) {
+      const item = sorted[i]!;
+      const y = item.transform[5] ?? 0;
+      if (Math.abs(y - lastY) < item.fontSize * 0.5) {
+        currentRow.push(item);
+      } else {
+        rows.push(currentRow.sort((a, b) => (a.transform[4] ?? 0) - (b.transform[4] ?? 0)));
+        currentRow = [item];
+        lastY = y;
+      }
+    }
+    rows.push(currentRow.sort((a, b) => (a.transform[4] ?? 0) - (b.transform[4] ?? 0)));
+    return rows;
+  }
+
+  /**
+   * Build a TableNode AST node from TableData.
+   */
+  private buildTableNode(data: TableData): TableNode | null {
+    if (data.headers.length === 0) return null;
+
+    const headerRow = createNode<TableRowNode>({
+      type: "table-row",
+      isHeader: true,
+      children: data.headers.map(
+        (h) =>
+          createNode<TableCellNode>({
+            type: "table-cell",
+            children: [createNode<TextNode>({ type: "text", value: h })],
+          })
+      ),
+    });
+
+    const dataRowNodes = data.rows.map(
+      (row) =>
+        createNode<TableRowNode>({
+          type: "table-row",
+          isHeader: false,
+          children: row.map(
+            (cell) =>
+              createNode<TableCellNode>({
+                type: "table-cell",
+                children: [createNode<TextNode>({ type: "text", value: cell })],
+              })
+          ),
+        })
+    );
+
+    return createNode<TableNode>({
+      type: "table",
+      children: [headerRow, ...dataRowNodes],
+    });
+  }
+
   private extractFontSize(item: Record<string, unknown>): number {
     const transform = item.transform as number[] | undefined;
     if (!transform || transform.length < 1) return 0;
@@ -294,15 +525,6 @@ export class PdfConverter implements Converter {
     return val !== undefined ? Math.abs(val) : 0;
   }
 
-  /**
-   * Classify a text line as a heading based on its font size relative to the
-   * document body font size.
-   *
-   * @param text - The raw text of the line.
-   * @param fontSize - The font size of the line.
-   * @param bodyFontSize - The most common (body) font size in the document.
-   * @returns A HeadingInfo if the line qualifies as a heading, otherwise undefined.
-   */
   private classifyHeading(
     text: string,
     fontSize: number,
@@ -312,7 +534,6 @@ export class PdfConverter implements Converter {
     const trimmed = text.trim();
     if (!trimmed) return undefined;
 
-    // Use relative sizing when a body font size is known.
     if (bodyFontSize > 0) {
       const ratio = fontSize / bodyFontSize;
       if (ratio > (ratios.h1 ?? 1.8)) return { level: 1, text: trimmed };
@@ -321,23 +542,14 @@ export class PdfConverter implements Converter {
       return undefined;
     }
 
-    // Fallback to absolute thresholds.
     if (fontSize > 20) return { level: 1, text: trimmed };
     if (fontSize > 16) return { level: 2, text: trimmed };
     if (fontSize > 13) return { level: 3, text: trimmed };
     return undefined;
   }
 
-  /**
-   * Convert input data to a Uint8Array.
-   * @param data - The input data in any supported format.
-   * @returns The data as a Uint8Array.
-   */
   private async toByteArray(data: Uint8Array | ArrayBuffer | Blob | string): Promise<Uint8Array> {
     if (data instanceof Uint8Array) {
-      // Node.js Buffer is a Uint8Array subclass, but pdfjs-dist v4+ rejects it with
-      // "Please provide binary data as Uint8Array, rather than Buffer." Re-wrap so
-      // the constructor is exactly Uint8Array.
       return data.constructor === Uint8Array
         ? data
         : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
