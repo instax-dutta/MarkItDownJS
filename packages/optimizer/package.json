@@ -1,6 +1,6 @@
 {
   "name": "@markitdownjs/optimizer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Semantic noise collapsing pipeline for MarkItDownJS",
   "license": "MIT",
   "type": "module",
