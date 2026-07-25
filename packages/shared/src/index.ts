@@ -12,6 +12,7 @@ export type {
   ImageInfo,
   HeadingInfo,
   ConversionStats,
+  ConversionWarning,
   ProgressCallback,
   ProgressInfo,
   Converter,
@@ -55,6 +56,7 @@ export type {
   MathNode,
   HorizontalRuleNode,
   RawNode,
+  CalloutNode,
   AnyNode,
 } from "./document-ast.js";
 

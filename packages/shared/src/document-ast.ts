@@ -27,7 +27,8 @@ export type NodeType =
   | "superscript"
   | "math"
   | "horizontal-rule"
-  | "raw";
+  | "raw"
+  | "callout";
 
 export interface DocumentNode {
   type: NodeType;
@@ -195,6 +196,12 @@ export interface RawNode extends DocumentNode {
   value: string;
 }
 
+export interface CalloutNode extends DocumentNode {
+  type: "callout";
+  calloutType: "note" | "warning" | "tip" | "caution";
+  children: AnyNode[];
+}
+
 export type AnyNode =
   | DocumentNode
   | HeadingNode
@@ -222,7 +229,8 @@ export type AnyNode =
   | StrikethroughNode
   | MathNode
   | HorizontalRuleNode
-  | RawNode;
+  | RawNode
+  | CalloutNode;
 
 export function createNode<T extends AnyNode>(node: T): T {
   return node;
