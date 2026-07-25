@@ -4,6 +4,8 @@ import { HeadingChunkingStrategy } from "./strategies/heading-strategy.js";
 import { PageChunkingStrategy } from "./strategies/page-strategy.js";
 import { SemanticChunkingStrategy } from "./strategies/semantic-strategy.js";
 import { FixedChunkingStrategy } from "./strategies/fixed-strategy.js";
+import { getDefaultTokenizerRegistry } from "./tokenizers/index.js";
+import { classifyChunks } from "./classifier.js";
 
 /** Interface for chunking strategy implementations */
 export interface ChunkingStrategy {
@@ -11,6 +13,24 @@ export interface ChunkingStrategy {
   name: string;
   /** Split an AST into document chunks */
   chunk(ast: AnyNode, options: ChunkingOptions): DocumentChunk[];
+}
+
+/** Resolves the tokenizer to use for the given options */
+function resolveTokenizer(options: ChunkingOptions): (text: string) => number {
+  // Custom function takes priority.
+  if (options.tokenizerFn) return options.tokenizerFn;
+
+  // Look up by name/model in the registry.
+  if (options.tokenizer) {
+    const registry = getDefaultTokenizerRegistry();
+    const tok = registry.resolve(options.tokenizer);
+    return (text: string) => tok.countTokens(text);
+  }
+
+  // Default: fast-bpe fallback.
+  const registry = getDefaultTokenizerRegistry();
+  const tok = registry.resolve("fast-bpe");
+  return (text: string) => tok.countTokens(text);
 }
 
 /** Creates a document chunk from collected nodes and metadata */
@@ -25,7 +45,8 @@ export function createChunk(
   if (nodes.length === 0) return null;
 
   const content = nodes.map((n) => getNodeText(n)).join("\n\n");
-  const tokenCount = content.split(/\s+/).filter(Boolean).length;
+  const countTokens = resolveTokenizer(options);
+  const tokenCount = countTokens(content);
 
   const root: AnyNode = nodes.length === 1 ? nodes[0]! : { type: "document", children: nodes };
 
@@ -69,13 +90,14 @@ export class DocumentChunker {
     return Array.from(this.strategies.keys());
   }
 
-  /** Chunk an AST using the specified strategy */
+  /** Chunk an AST using the specified strategy, then classify content types */
   chunk(ast: AnyNode, options: ChunkingOptions): DocumentChunk[] {
     const strategyName = options.strategy ?? "heading";
     const strategy = this.strategies.get(strategyName);
     if (!strategy) {
       throw new Error(`Unknown chunking strategy: ${strategyName}`);
     }
-    return strategy.chunk(ast, options);
+    const rawChunks = strategy.chunk(ast, options);
+    return classifyChunks(rawChunks);
   }
 }

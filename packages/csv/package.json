@@ -1,6 +1,6 @@
 {
   "name": "@markitdownjs/csv",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "CSV converter for MarkItDownJS",
   "license": "MIT",
   "type": "module",

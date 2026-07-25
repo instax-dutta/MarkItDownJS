@@ -36,6 +36,11 @@ export interface ChunkMetadata {
   sourceFile?: string;
   startIndex: number;
   endIndex: number;
+  /** Content type classification for embedding strategy selection */
+  contentType?: "narrative" | "table" | "code" | "list" | "callout" | "heading-only" | "mixed";
+  /** Overlap range metadata for deduplication */
+  overlapStart?: number;
+  overlapEnd?: number;
 }
 
 /** Document chunk for RAG */
@@ -52,8 +57,13 @@ export interface ChunkingOptions {
   strategy?: "heading" | "page" | "semantic" | "fixed";
   maxTokens?: number;
   overlap?: number;
+  overlapMode?: "tokens" | "sentences";
   headingDepth?: number;
   sourceFile?: string;
+  /** Tokenizer name or model name for accurate token counting (e.g., "cl100k_base", "gpt-4o") */
+  tokenizer?: string;
+  /** Custom tokenizer function — overrides the tokenizer registry lookup */
+  tokenizerFn?: (text: string) => number;
 }
 
 export interface ConversionInput {
@@ -97,6 +107,8 @@ export interface ConversionResult {
   stats: ConversionStats;
   /** Document chunks for RAG workflows (only populated when chunking is enabled) */
   chunks?: DocumentChunk[];
+  /** Warnings emitted during conversion (non-fatal issues) */
+  warnings?: ConversionWarning[];
 }
 
 export interface AssetInfo {
@@ -138,6 +150,13 @@ export interface ConversionStats {
   outputSize: number;
   pagesProcessed?: number;
   chunksProcessed?: number;
+}
+
+/** Warning emitted during conversion when a converter encounters non-fatal issues */
+export interface ConversionWarning {
+  converter: string;
+  message: string;
+  severity: "info" | "warning" | "error";
 }
 
 export type ProgressCallback = (progress: ProgressInfo) => void;
