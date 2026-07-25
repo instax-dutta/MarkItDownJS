@@ -39,5 +39,8 @@
     "plaintext",
     "renderer",
     "typescript"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

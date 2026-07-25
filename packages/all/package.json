@@ -57,5 +57,8 @@
     "markitdownjs",
     "typescript",
     "umbrella"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -37,5 +37,8 @@
     "optimization",
     "rules",
     "typescript"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

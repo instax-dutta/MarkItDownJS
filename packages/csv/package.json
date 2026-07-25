@@ -37,5 +37,8 @@
     "markitdownjs",
     "tsv",
     "typescript"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

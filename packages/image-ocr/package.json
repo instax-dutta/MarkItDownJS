@@ -47,5 +47,8 @@
     "optical-character-recognition",
     "tesseract",
     "typescript"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

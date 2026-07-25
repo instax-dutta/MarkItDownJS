@@ -44,5 +44,8 @@
     "markitdownjs",
     "react",
     "typescript"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

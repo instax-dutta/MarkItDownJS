@@ -39,5 +39,8 @@
     "spreadsheet",
     "typescript",
     "xlsx"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

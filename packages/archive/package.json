@@ -38,5 +38,8 @@
     "markitdownjs",
     "typescript",
     "zip"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

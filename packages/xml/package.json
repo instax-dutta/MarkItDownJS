@@ -35,5 +35,8 @@
     "markitdownjs",
     "typescript",
     "xml"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

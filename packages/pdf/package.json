@@ -37,5 +37,8 @@
     "markitdownjs",
     "pdf",
     "typescript"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -42,5 +42,8 @@
     "markitdownjs",
     "rest",
     "typescript"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

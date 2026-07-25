@@ -42,5 +42,8 @@
     "nextjs",
     "server-action",
     "typescript"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

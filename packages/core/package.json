@@ -40,5 +40,8 @@
     "pipeline",
     "registry",
     "typescript"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

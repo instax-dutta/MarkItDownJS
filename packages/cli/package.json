@@ -40,5 +40,8 @@
     "markitdownjs",
     "terminal",
     "typescript"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

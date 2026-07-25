@@ -36,5 +36,8 @@
     "markitdownjs",
     "typescript",
     "all-in-one"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
