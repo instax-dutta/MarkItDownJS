@@ -1,5 +1,13 @@
 # @markitdownjs/xlsx
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [c94de6d]
+  - @markitdownjs/shared@0.4.0
+  - @markitdownjs/ast@0.1.4
+
 ## 0.3.0
 
 ### Minor Changes

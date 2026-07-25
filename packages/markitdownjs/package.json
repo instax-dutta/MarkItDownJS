@@ -1,6 +1,6 @@
 {
   "name": "markitdownjs",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Universal document-to-Markdown conversion — a single dependency for all MarkItDownJS packages",
   "license": "MIT",
   "type": "module",

@@ -1,5 +1,14 @@
 # @markitdownjs/pdf
 
+## 0.3.1
+
+### Patch Changes
+
+- c94de6d: Update `pdfjs-dist` from `^4.0.0` to `^5.0.0`. This is a major dependency bump with no breaking API changes in the PDF converter — all 6 converter tests pass on v5.7.284.
+- Updated dependencies [c94de6d]
+  - @markitdownjs/shared@0.4.0
+  - @markitdownjs/ast@0.1.4
+
 ## 0.3.0
 
 ### Minor Changes
