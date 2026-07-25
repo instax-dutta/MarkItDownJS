@@ -1,6 +1,6 @@
 {
   "name": "@markitdownjs/pdf",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "PDF converter for MarkItDownJS",
   "license": "MIT",
   "type": "module",
