@@ -12,7 +12,7 @@
  * This script shows how to achieve the same results programmatically.
  */
 
-import { MarkItDown } from "markitdownjs";
+import { MarkItDown } from "@markitdownjs/markitdownjs";
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from "fs";
 
 async function main() {

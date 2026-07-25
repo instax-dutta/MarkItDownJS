@@ -1,4 +1,4 @@
-import { createMarkItDown } from "markitdownjs";
+import { createMarkItDown } from "@markitdownjs/markitdownjs";
 
 async function main() {
   // Create a fully-configured instance with all converters + chunker

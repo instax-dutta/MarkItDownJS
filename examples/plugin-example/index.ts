@@ -1,4 +1,4 @@
-import { MarkItDown } from "markitdownjs";
+import { MarkItDown } from "@markitdownjs/markitdownjs";
 import { CustomFormatConverter } from "./custom-converter.js";
 
 async function main() {

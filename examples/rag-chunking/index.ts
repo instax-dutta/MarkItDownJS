@@ -1,4 +1,4 @@
-import { createMarkItDown, DocumentChunker, HeadingChunkingStrategy } from "markitdownjs";
+import { createMarkItDown, DocumentChunker, HeadingChunkingStrategy } from "@markitdownjs/markitdownjs";
 
 async function main() {
   const md = createMarkItDown();

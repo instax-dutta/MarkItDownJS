@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { MarkItDown, createMarkItDown } from "markitdownjs";
+ * import { MarkItDown, createMarkItDown } from "@markitdownjs/markitdownjs";
  *
  * const md = createMarkItDown();
  * const result = await md.convert("report.docx");

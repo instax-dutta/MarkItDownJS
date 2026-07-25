@@ -22,11 +22,11 @@ Transform PDFs, DOCX, PPTX, XLSX, HTML, EPUB, CSV, JSON, XML, images, audio, and
 ## Quick Start
 
 ```bash
-npm install markitdownjs
+npm install @markitdownjs/markitdownjs
 ```
 
 ```typescript
-import { createMarkItDown } from "markitdownjs";
+import { createMarkItDown } from "@markitdownjs/markitdownjs";
 
 // Create a fully-configured instance with all converters + chunker
 const md = createMarkItDown();
@@ -87,7 +87,7 @@ console.log(result.markdown);
 
 | Package | Version | Description |
 |---------|---------|-------------|
-| [`markitdownjs`](./packages/markitdownjs) | [![npm](https://img.shields.io/npm/v/markitdownjs?label=)](https://www.npmjs.com/package/markitdownjs) | **Unscoped all-in-one** — single `npm install` entry point |
+| [`@markitdownjs/markitdownjs`](./packages/markitdownjs) | [![npm](https://img.shields.io/npm/v/@markitdownjs/markitdownjs?label=)](https://www.npmjs.com/package/@markitdownjs/markitdownjs) | **Scoped all-in-one** — single `npm install` entry point |
 | [`@markitdownjs/all`](./packages/all) | [![npm](https://img.shields.io/npm/v/@markitdownjs/all?label=)](https://www.npmjs.com/package/@markitdownjs/all) | Umbrella — all packages + `createMarkItDown()` preset |
 | [`@markitdownjs/core`](./packages/core) | [![npm](https://img.shields.io/npm/v/@markitdownjs/core?label=)](https://www.npmjs.com/package/@markitdownjs/core) | `MarkItDown` class, pipeline, registry, renderer |
 | [`@markitdownjs/shared`](./packages/shared) | [![npm](https://img.shields.io/npm/v/@markitdownjs/shared?label=)](https://www.npmjs.com/package/@markitdownjs/shared) | AST types, MIME utils, errors, base interfaces |
@@ -215,7 +215,7 @@ Or with a custom parser:
 
 ```typescript
 import { createConvertRoute } from "@markitdownjs/next";
-import { createMarkItDown } from "markitdownjs";
+import { createMarkItDown } from "@markitdownjs/markitdownjs";
 
 export const POST = createConvertRoute({ parser: createMarkItDown() });
 ```

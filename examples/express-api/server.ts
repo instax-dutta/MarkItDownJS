@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
-import { createMarkItDown } from "markitdownjs";
+import { createMarkItDown } from "@markitdownjs/markitdownjs";
 
 const app = new Hono();
 const md = createMarkItDown();

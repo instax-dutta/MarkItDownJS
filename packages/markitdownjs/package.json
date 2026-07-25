@@ -1,5 +1,5 @@
 {
-  "name": "markitdownjs",
+  "name": "@markitdownjs/markitdownjs",
   "version": "0.4.0",
   "description": "Universal document-to-Markdown conversion — a single dependency for all MarkItDownJS packages",
   "license": "MIT",
@@ -35,6 +35,6 @@
     "markdown",
     "markitdownjs",
     "typescript",
-    "unscoped"
+    "all-in-one"
   ]
 }
