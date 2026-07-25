@@ -28,5 +28,15 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "bundle",
+    "converter",
+    "document-conversion",
+    "markdown",
+    "markitdownjs",
+    "pack",
+    "portable",
+    "typescript"
+  ]
 }

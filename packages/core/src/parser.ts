@@ -1,4 +1,12 @@
-import type { ConversionInput, ConversionResult, ConverterRegistry } from "@markitdownjs/shared";
+import type {
+  ConversionInput,
+  ConversionResult,
+  ConverterRegistry,
+  DocumentRenderer,
+  Chunker,
+  Converter,
+} from "@markitdownjs/shared";
+import { detectMimeTypeFromData } from "@markitdownjs/shared";
 import { DefaultConverterRegistry } from "./registry.js";
 import { DocumentPipeline } from "./pipeline.js";
 import { MarkdownRenderer } from "./renderer.js";
@@ -12,6 +20,8 @@ export interface MarkItDownOptions {
 export class MarkItDown {
   private pipeline: DocumentPipeline;
   private renderer: MarkdownRenderer;
+  private customRenderer?: DocumentRenderer;
+  private chunker?: Chunker;
 
   constructor(options?: MarkItDownOptions) {
     const registry = options?.registry ?? new DefaultConverterRegistry();
@@ -63,11 +73,42 @@ export class MarkItDown {
     return this.pipeline.getRegistry();
   }
 
+  /**
+   * Register a converter by delegating to the internal registry.
+   */
+  registerConverter(converter: Converter): void {
+    this.getRegistry().register(converter);
+  }
+
+  /**
+   * Register a custom document renderer that overrides the default MarkdownRenderer.
+   * Accepts any object implementing the DocumentRenderer interface.
+   */
+  registerRenderer(renderer: DocumentRenderer): void {
+    this.customRenderer = renderer;
+  }
+
+  /**
+   * Register a chunker for RAG document chunking.
+   * When a chunker is registered and `chunking` options are provided to `convert()`,
+   * chunks are automatically generated after conversion.
+   */
+  registerChunker(chunker: Chunker): void {
+    this.chunker = chunker;
+  }
+
   async convert(
     input: ConversionInput | File | Blob | Uint8Array | string
   ): Promise<ConversionResult> {
     const normalizedInput = this.normalizeInput(input);
-    return this.pipeline.convert(normalizedInput);
+    const result = await this.pipeline.convert(normalizedInput);
+
+    // Auto-chunk if a chunker is registered and chunking options are provided.
+    if (this.chunker && result.ast && normalizedInput.options?.chunking) {
+      result.chunks = this.chunker.chunk(result.ast, normalizedInput.options.chunking);
+    }
+
+    return result;
   }
 
   async convertToMarkdown(
@@ -79,17 +120,22 @@ export class MarkItDown {
 
   async convertToJson(input: ConversionInput | File | Blob | Uint8Array | string): Promise<string> {
     const result = await this.convert(input);
-    return this.renderer.render(result, "json");
+    const renderer = this.customRenderer ?? this.renderer;
+    return renderer.render(result, "json");
   }
 
   private normalizeInput(
     input: ConversionInput | File | Blob | Uint8Array | string
   ): ConversionInput {
     if (typeof input === "string") {
-      return { data: input };
+      // Extract fileName from the path for extension-based MIME detection
+      const fileName = input.split(/[/\\]/).pop();
+      return { data: input, fileName };
     }
     if (input instanceof Uint8Array) {
-      return { data: input };
+      // Auto-detect MIME from buffer magic bytes when no mimeType is provided
+      const mimeType = detectMimeTypeFromData(input);
+      return { data: input, mimeType };
     }
     if (typeof File !== "undefined" && input instanceof File) {
       return {

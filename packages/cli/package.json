@@ -30,5 +30,15 @@
   "devDependencies": {
     "typescript": "^5.5.0",
     "@types/node": "^20.19.43"
-  }
+  },
+  "keywords": [
+    "cli",
+    "command-line",
+    "converter",
+    "document-conversion",
+    "markdown",
+    "markitdownjs",
+    "terminal",
+    "typescript"
+  ]
 }

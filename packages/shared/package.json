@@ -27,5 +27,15 @@
   },
   "devDependencies": {
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "ast",
+    "converter",
+    "document-conversion",
+    "markdown",
+    "markitdownjs",
+    "types",
+    "typescript",
+    "utilities"
+  ]
 }

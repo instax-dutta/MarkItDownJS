@@ -25,10 +25,7 @@ function djb2Hash(str: string): string {
  * Normalizes the content by lowercasing and collapsing whitespace before hashing.
  */
 export function computeContentHash(text: string): string {
-  const normalized = text
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
+  const normalized = text.toLowerCase().replace(/\s+/g, " ").trim();
   return `djb2:${djb2Hash(normalized)}`;
 }
 
@@ -59,7 +56,9 @@ function collectNodeTypes(node: AnyNode): string[] {
  * Compute fingerprints for all chunks.
  * Returns the chunks with fingerprint metadata attached.
  */
-export function fingerprintChunks(chunks: DocumentChunk[]): (DocumentChunk & { fingerprint: ChunkFingerprint })[] {
+export function fingerprintChunks(
+  chunks: DocumentChunk[]
+): (DocumentChunk & { fingerprint: ChunkFingerprint })[] {
   return chunks.map((chunk) => ({
     ...chunk,
     fingerprint: {
@@ -86,7 +85,10 @@ export function detectChangedChunks(
 
     if (!oldFp || !newFp) {
       changed.push(i);
-    } else if (oldFp.contentHash !== newFp.contentHash || oldFp.structureHash !== newFp.structureHash) {
+    } else if (
+      oldFp.contentHash !== newFp.contentHash ||
+      oldFp.structureHash !== newFp.structureHash
+    ) {
       changed.push(i);
     }
   }

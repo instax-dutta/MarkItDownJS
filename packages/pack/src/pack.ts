@@ -5,13 +5,11 @@ import type { PackBundle, PackManifest, PackOptions } from "./types.js";
  * Pack a ConversionResult into a portable bundle.
  * The bundle contains compressed chunks and metadata that can be restored anywhere.
  */
-export async function pack(result: ConversionResult, options: PackOptions = {}): Promise<PackBundle> {
-  const {
-    compression: _compression = "none",
-    includeAst = false,
-    includeChunks = true,
-    metadata,
-  } = options;
+export async function pack(
+  result: ConversionResult,
+  options: PackOptions = {}
+): Promise<PackBundle> {
+  const { includeAst = false, includeChunks = true, metadata } = options;
 
   const chunks = result.chunks ?? [];
 

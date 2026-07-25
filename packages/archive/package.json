@@ -28,5 +28,15 @@
   },
   "devDependencies": {
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "archive",
+    "compression",
+    "converter",
+    "document-conversion",
+    "markdown",
+    "markitdownjs",
+    "typescript",
+    "zip"
+  ]
 }

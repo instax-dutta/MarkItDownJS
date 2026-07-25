@@ -32,5 +32,15 @@
     "typescript": "^5.5.0",
     "next": "^14.0.0",
     "@markitdownjs/core": "workspace:*"
-  }
+  },
+  "keywords": [
+    "api-route",
+    "converter",
+    "document-conversion",
+    "markdown",
+    "markitdownjs",
+    "nextjs",
+    "server-action",
+    "typescript"
+  ]
 }

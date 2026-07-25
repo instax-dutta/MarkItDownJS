@@ -1,0 +1,16 @@
+{
+  "name": "example-cli-usage",
+  "private": true,
+  "description": "CLI usage examples for MarkItDownJS",
+  "type": "module",
+  "scripts": {
+    "start": "tsx cli-examples.ts"
+  },
+  "dependencies": {
+    "@markitdownjs/cli": "latest"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  }
+}

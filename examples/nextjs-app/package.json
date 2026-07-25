@@ -1,0 +1,22 @@
+{
+  "name": "example-nextjs-app",
+  "private": true,
+  "description": "Next.js integration example for MarkItDownJS",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@markitdownjs/react": "latest",
+    "@markitdownjs/next": "latest"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/react": "^19.0.0",
+    "@types/node": "^20.0.0"
+  }
+}

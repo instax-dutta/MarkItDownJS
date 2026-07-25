@@ -27,5 +27,15 @@
   },
   "devDependencies": {
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "cleanup",
+    "converter",
+    "document-conversion",
+    "markdown",
+    "markitdownjs",
+    "optimization",
+    "rules",
+    "typescript"
+  ]
 }

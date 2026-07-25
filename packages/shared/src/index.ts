@@ -24,6 +24,8 @@ export type {
   ChunkMetadata,
   DocumentChunk,
   ChunkingOptions,
+  DocumentRenderer,
+  Chunker,
 } from "./types.js";
 
 export type {
@@ -94,6 +96,7 @@ export {
   blobToUint8Array,
   readInputData,
   detectMimeTypeFromData,
+  detectMimeTypeFromBuffer,
   truncateText,
   generateId,
   mergeOptions,

@@ -29,5 +29,14 @@
   },
   "devDependencies": {
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "converter",
+    "document-conversion",
+    "docx",
+    "markdown",
+    "markitdownjs",
+    "typescript",
+    "word"
+  ]
 }

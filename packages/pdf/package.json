@@ -25,9 +25,17 @@
   "dependencies": {
     "@markitdownjs/ast": "workspace:*",
     "@markitdownjs/shared": "workspace:*",
-    "pdfjs-dist": "^4.0.0"
+    "pdfjs-dist": "^5.0.0"
   },
   "devDependencies": {
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "converter",
+    "document-conversion",
+    "markdown",
+    "markitdownjs",
+    "pdf",
+    "typescript"
+  ]
 }

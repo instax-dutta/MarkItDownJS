@@ -29,5 +29,14 @@
   },
   "devDependencies": {
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "converter",
+    "document-conversion",
+    "ebook",
+    "epub",
+    "markdown",
+    "markitdownjs",
+    "typescript"
+  ]
 }

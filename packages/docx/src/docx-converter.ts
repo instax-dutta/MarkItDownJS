@@ -385,16 +385,24 @@ export class DocxConverter implements Converter {
   private guessImageMimeType(path: string): string {
     const ext = path.split(".").pop()?.toLowerCase();
     switch (ext) {
-      case "png": return "image/png";
+      case "png":
+        return "image/png";
       case "jpg":
-      case "jpeg": return "image/jpeg";
-      case "gif": return "image/gif";
-      case "bmp": return "image/bmp";
+      case "jpeg":
+        return "image/jpeg";
+      case "gif":
+        return "image/gif";
+      case "bmp":
+        return "image/bmp";
       case "tiff":
-      case "tif": return "image/tiff";
-      case "emf": return "image/emf";
-      case "wmf": return "image/wmf";
-      default: return "image/png";
+      case "tif":
+        return "image/tiff";
+      case "emf":
+        return "image/emf";
+      case "wmf":
+        return "image/wmf";
+      default:
+        return "image/png";
     }
   }
 

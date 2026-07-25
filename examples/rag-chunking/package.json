@@ -1,0 +1,16 @@
+{
+  "name": "example-rag-chunking",
+  "private": true,
+  "description": "RAG chunking example for MarkItDownJS",
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "markitdownjs": "latest"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  }
+}

@@ -27,5 +27,17 @@
   },
   "devDependencies": {
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "converter",
+    "document-conversion",
+    "html-renderer",
+    "json-renderer",
+    "markdown",
+    "markdown-renderer",
+    "markitdownjs",
+    "plaintext",
+    "renderer",
+    "typescript"
+  ]
 }

@@ -34,17 +34,14 @@ export class HeadingChunkingStrategy implements ChunkingStrategy {
       // Prepend overlap from previous chunk if configured.
       let nodesToChunk = [...currentNodes];
       if (overlapText && overlapTokens > 0) {
-        const overlapNode: AnyNode = { type: "paragraph", children: [{ type: "text", value: overlapText }] };
+        const overlapNode: AnyNode = {
+          type: "paragraph",
+          children: [{ type: "text", value: overlapText }],
+        };
         nodesToChunk = [overlapNode, ...nodesToChunk];
       }
 
-      const chunk = createChunk(
-        nodesToChunk,
-        [...headingPath],
-        options,
-        startIndex,
-        globalOffset
-      );
+      const chunk = createChunk(nodesToChunk, [...headingPath], options, startIndex, globalOffset);
       if (chunk) {
         // Set overlap metadata.
         if (overlapText && overlapTokens > 0) {
@@ -52,7 +49,14 @@ export class HeadingChunkingStrategy implements ChunkingStrategy {
         }
 
         if (chunk.metadata.tokenCount > maxTokens) {
-          const split = splitLargeChunk(currentNodes, headingPath, options, maxTokens, startIndex, countTokens);
+          const split = splitLargeChunk(
+            currentNodes,
+            headingPath,
+            options,
+            maxTokens,
+            startIndex,
+            countTokens
+          );
           chunks.push(...split);
         } else {
           chunks.push(chunk);
@@ -169,7 +173,14 @@ function splitLargeChunk(
     }
 
     if (nodeTokens > maxTokens && node.type === "paragraph" && "children" in node) {
-      const subChunks = splitParagraph(node as AnyNode, headingPath, options, maxTokens, offset, countTokens);
+      const subChunks = splitParagraph(
+        node as AnyNode,
+        headingPath,
+        options,
+        maxTokens,
+        offset,
+        countTokens
+      );
       chunks.push(...subChunks);
       offset += nodeTokens;
     } else {

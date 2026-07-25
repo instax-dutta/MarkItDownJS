@@ -81,11 +81,6 @@ export class Cl100kTokenizer extends TikTokenizer {
 /** GPT-4o, GPT-4o-mini tokenizer (newer encoding) */
 export class O200kTokenizer extends TikTokenizer {
   constructor() {
-    super("o200k_base", "o200k_base", [
-      "gpt-4o",
-      "gpt-4o-mini",
-      "gpt-4.1",
-      "gpt-4.1-mini",
-    ]);
+    super("o200k_base", "o200k_base", ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini"]);
   }
 }

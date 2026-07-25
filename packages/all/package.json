@@ -1,0 +1,61 @@
+{
+  "name": "@markitdownjs/all",
+  "version": "0.3.0",
+  "description": "All-in-one MarkItDownJS package — every converter, renderer, and chunker bundled together",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "tsc --watch --project tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@markitdownjs/shared": "workspace:*",
+    "@markitdownjs/core": "workspace:*",
+    "@markitdownjs/ast": "workspace:*",
+    "@markitdownjs/chunking": "workspace:*",
+    "@markitdownjs/pdf": "workspace:*",
+    "@markitdownjs/docx": "workspace:*",
+    "@markitdownjs/xlsx": "workspace:*",
+    "@markitdownjs/pptx": "workspace:*",
+    "@markitdownjs/html": "workspace:*",
+    "@markitdownjs/csv": "workspace:*",
+    "@markitdownjs/json": "workspace:*",
+    "@markitdownjs/xml": "workspace:*",
+    "@markitdownjs/epub": "workspace:*",
+    "@markitdownjs/audio": "workspace:*",
+    "@markitdownjs/image-ocr": "workspace:*",
+    "@markitdownjs/archive": "workspace:*",
+    "@markitdownjs/react": "workspace:*",
+    "@markitdownjs/next": "workspace:*",
+    "@markitdownjs/cli": "workspace:*",
+    "@markitdownjs/api": "workspace:*",
+    "@markitdownjs/pack": "workspace:*",
+    "@markitdownjs/optimizer": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  },
+  "keywords": [
+    "all-in-one",
+    "converter",
+    "document-conversion",
+    "markdown",
+    "markitdownjs",
+    "typescript",
+    "umbrella"
+  ]
+}

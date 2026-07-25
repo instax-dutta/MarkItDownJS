@@ -369,8 +369,7 @@ export class PdfConverter implements Converter {
 
       if (
         currentLine &&
-        (Math.abs(y - lastY) > fontSize * 0.5 ||
-          (fontSize !== lastFontSize && lastFontSize > 0))
+        (Math.abs(y - lastY) > fontSize * 0.5 || (fontSize !== lastFontSize && lastFontSize > 0))
       ) {
         flushLine();
       }
@@ -488,28 +487,25 @@ export class PdfConverter implements Converter {
     const headerRow = createNode<TableRowNode>({
       type: "table-row",
       isHeader: true,
-      children: data.headers.map(
-        (h) =>
-          createNode<TableCellNode>({
-            type: "table-cell",
-            children: [createNode<TextNode>({ type: "text", value: h })],
-          })
+      children: data.headers.map((h) =>
+        createNode<TableCellNode>({
+          type: "table-cell",
+          children: [createNode<TextNode>({ type: "text", value: h })],
+        })
       ),
     });
 
-    const dataRowNodes = data.rows.map(
-      (row) =>
-        createNode<TableRowNode>({
-          type: "table-row",
-          isHeader: false,
-          children: row.map(
-            (cell) =>
-              createNode<TableCellNode>({
-                type: "table-cell",
-                children: [createNode<TextNode>({ type: "text", value: cell })],
-              })
-          ),
-        })
+    const dataRowNodes = data.rows.map((row) =>
+      createNode<TableRowNode>({
+        type: "table-row",
+        isHeader: false,
+        children: row.map((cell) =>
+          createNode<TableCellNode>({
+            type: "table-cell",
+            children: [createNode<TextNode>({ type: "text", value: cell })],
+          })
+        ),
+      })
     );
 
     return createNode<TableNode>({

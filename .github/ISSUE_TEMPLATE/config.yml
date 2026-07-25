@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/instax-dutta/MarkItDownJS/discussions
+    about: Please ask questions and start discussions here
+  - name: Documentation
+    url: https://github.com/instax-dutta/MarkItDownJS#readme
+    about: Check the README for usage guides and examples

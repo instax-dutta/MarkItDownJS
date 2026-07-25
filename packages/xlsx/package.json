@@ -29,5 +29,15 @@
   },
   "devDependencies": {
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "converter",
+    "document-conversion",
+    "excel",
+    "markdown",
+    "markitdownjs",
+    "spreadsheet",
+    "typescript",
+    "xlsx"
+  ]
 }

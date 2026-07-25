@@ -27,5 +27,16 @@
   },
   "devDependencies": {
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "audio",
+    "converter",
+    "document-conversion",
+    "markdown",
+    "markitdownjs",
+    "metadata",
+    "speech-to-text",
+    "transcription",
+    "typescript"
+  ]
 }

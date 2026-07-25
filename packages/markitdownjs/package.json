@@ -1,0 +1,40 @@
+{
+  "name": "markitdownjs",
+  "version": "0.3.0",
+  "description": "Universal document-to-Markdown conversion — a single dependency for all MarkItDownJS packages",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "tsc --watch --project tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@markitdownjs/all": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  },
+  "keywords": [
+    "all-in-one",
+    "converter",
+    "document-conversion",
+    "markdown",
+    "markitdownjs",
+    "typescript",
+    "unscoped"
+  ]
+}

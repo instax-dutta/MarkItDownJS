@@ -1,0 +1,19 @@
+{
+  "name": "example-express-api",
+  "private": true,
+  "description": "HTTP API server example for MarkItDownJS",
+  "type": "module",
+  "scripts": {
+    "start": "tsx server.ts"
+  },
+  "dependencies": {
+    "markitdownjs": "latest",
+    "hono": "^4.0.0",
+    "@hono/node-server": "^4.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0"
+  }
+}

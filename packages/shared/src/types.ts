@@ -215,3 +215,20 @@ export interface Logger {
   warn(message: string, ...args: unknown[]): void;
   error(message: string, ...args: unknown[]): void;
 }
+
+/**
+ * Generic document renderer interface for outputting conversion results.
+ * Implemented by @markitdownjs/ast renderers (MarkdownRenderer, HtmlRenderer, etc.)
+ * and the core MarkdownRenderer.
+ */
+export interface DocumentRenderer {
+  render(result: ConversionResult, format?: OutputFormat): string;
+}
+
+/**
+ * Generic chunker interface for RAG document chunking.
+ * Implemented by DocumentChunker from @markitdownjs/chunking.
+ */
+export interface Chunker {
+  chunk(ast: AnyNode, options: ChunkingOptions): DocumentChunk[];
+}

@@ -1,4 +1,11 @@
-import type { AnyNode, ImageNode, ListNode, ListItemNode, TextNode, HtmlNode } from "@markitdownjs/shared";
+import type {
+  AnyNode,
+  ImageNode,
+  ListNode,
+  ListItemNode,
+  TextNode,
+  HtmlNode,
+} from "@markitdownjs/shared";
 import type { OptimizerRule } from "./types.js";
 
 /** Regex for decorative/tracking image patterns */

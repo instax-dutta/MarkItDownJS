@@ -23,7 +23,11 @@
     { "path": "packages/react" },
     { "path": "packages/next" },
     { "path": "packages/cli" },
-    { "path": "packages/api" }
+    { "path": "packages/api" },
+    { "path": "packages/pack" },
+    { "path": "packages/optimizer" },
+    { "path": "packages/all" },
+    { "path": "packages/markitdownjs" }
   ],
   "files": []
 }

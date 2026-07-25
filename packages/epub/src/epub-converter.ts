@@ -315,8 +315,9 @@ function parseNavPoint(el: Element, _ncxDir: string): NcxNavPoint {
   const title = titleEl?.textContent?.trim() ?? "";
   const src = contentEl?.getAttribute("src") ?? "";
 
-  const childPoints = Array.from(el.querySelectorAll(":scope > navPoint"))
-    .map((child) => parseNavPoint(child, _ncxDir));
+  const childPoints = Array.from(el.querySelectorAll(":scope > navPoint")).map((child) =>
+    parseNavPoint(child, _ncxDir)
+  );
 
   return { title, src, children: childPoints };
 }

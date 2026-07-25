@@ -1,4 +1,9 @@
-import type { ConversionInput, ConversionResult, ConversionWarning, ConverterRegistry } from "@markitdownjs/shared";
+import type {
+  ConversionInput,
+  ConversionResult,
+  ConversionWarning,
+  ConverterRegistry,
+} from "@markitdownjs/shared";
 import { ConversionError, CancellationError } from "@markitdownjs/shared";
 import { checkSignal, readInputData } from "@markitdownjs/shared";
 import { DefaultConverterRegistry } from "./registry.js";

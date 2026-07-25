@@ -10,7 +10,12 @@ export { classifyChunkContentType, classifyChunks } from "./classifier.js";
 export type { ContentType } from "./classifier.js";
 
 // Deduplication fingerprinting
-export { computeContentHash, computeStructureHash, fingerprintChunks, detectChangedChunks } from "./fingerprint.js";
+export {
+  computeContentHash,
+  computeStructureHash,
+  fingerprintChunks,
+  detectChangedChunks,
+} from "./fingerprint.js";
 export type { ChunkFingerprint } from "./fingerprint.js";
 
 // Tokenizer sub-package

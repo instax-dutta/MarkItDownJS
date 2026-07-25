@@ -27,5 +27,15 @@
   },
   "devDependencies": {
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "converter",
+    "csv",
+    "delimiter",
+    "document-conversion",
+    "markdown",
+    "markitdownjs",
+    "tsv",
+    "typescript"
+  ]
 }

@@ -27,5 +27,17 @@
   },
   "devDependencies": {
     "typescript": "^5.5.0"
-  }
+  },
+  "keywords": [
+    "chunking",
+    "converter",
+    "document-chunks",
+    "document-conversion",
+    "embedding",
+    "markdown",
+    "markitdownjs",
+    "rag",
+    "typescript",
+    "vector-search"
+  ]
 }

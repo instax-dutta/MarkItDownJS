@@ -34,7 +34,8 @@ import {
  * Regex for decorative/tracking image patterns.
  * Matches src attributes containing common tracking pixels, badges, and icons.
  */
-const DECORATIVE_IMG_RE = /pixel|tracking|spacer|blank|1x1|badge|icon|spinner|logo|avatar|thumb|loading/i;
+const DECORATIVE_IMG_RE =
+  /pixel|tracking|spacer|blank|1x1|badge|icon|spinner|logo|avatar|thumb|loading/i;
 
 /**
  * Regex for footnote-like CSS class names.
@@ -460,8 +461,12 @@ export class HtmlConverter implements Converter {
 
     // Strip decorative/tracking images (tracking pixels, 1x1 images, icons).
     if (DECORATIVE_IMG_RE.test(src)) return null;
-    const width = el.hasAttribute("width") ? parseInt(el.getAttribute("width") ?? "0") || undefined : undefined;
-    const height = el.hasAttribute("height") ? parseInt(el.getAttribute("height") ?? "0") || undefined : undefined;
+    const width = el.hasAttribute("width")
+      ? parseInt(el.getAttribute("width") ?? "0") || undefined
+      : undefined;
+    const height = el.hasAttribute("height")
+      ? parseInt(el.getAttribute("height") ?? "0") || undefined
+      : undefined;
     if (width === 1 && height === 1) return null; // Tracking pixel
     if (src.startsWith("data:") && src.includes("base64,")) {
       const dataPart = src.split("base64,")[1] ?? "";

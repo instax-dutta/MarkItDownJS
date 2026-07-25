@@ -33,5 +33,16 @@
     "react": "^18.2.0",
     "@types/react": "^18.2.0",
     "@markitdownjs/core": "workspace:*"
-  }
+  },
+  "keywords": [
+    "component",
+    "converter",
+    "document-conversion",
+    "dropzone",
+    "hook",
+    "markdown",
+    "markitdownjs",
+    "react",
+    "typescript"
+  ]
 }

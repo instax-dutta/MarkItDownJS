@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarkItDownJS — Browser Example</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 800px; margin: 0 auto; padding: 2rem;
+      color: #1a1a2e; background: #f8f9fa;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    p { color: #6b7280; margin-bottom: 1.5rem; }
+    #dropzone {
+      border: 2px dashed #d1d5db; border-radius: 8px;
+      padding: 3rem; text-align: center; cursor: pointer;
+      transition: all 0.2s; background: white;
+    }
+    #dropzone.dragover {
+      border-color: #3b82f6; background: #eff6ff;
+    }
+    #dropzone.has-file {
+      border-color: #10b981; background: #ecfdf5;
+    }
+    #result {
+      margin-top: 1.5rem; background: white;
+      border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 1rem; display: none;
+    }
+    #result.visible { display: block; }
+    pre {
+      background: #f9fafb; border: 1px solid #e5e7eb;
+      border-radius: 6px; padding: 1rem; overflow: auto;
+      max-height: 400px; font-size: 0.875rem;
+      line-height: 1.5; white-space: pre-wrap;
+    }
+    #status { margin-top: 1rem; color: #6b7280; font-size: 0.875rem; }
+    #error { margin-top: 1rem; color: #ef4444; font-size: 0.875rem; display: none; }
+    .badge {
+      display: inline-block; padding: 0.125rem 0.5rem;
+      border-radius: 999px; font-size: 0.75rem; font-weight: 500;
+      background: #dbeafe; color: #1d4ed8; margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>📄 MarkItDownJS</h1>
+  <p>Drop any supported document to convert it to Markdown — all in your browser.</p>
+
+  <div id="dropzone" onclick="document.getElementById('fileInput').click()">
+    <p style="margin: 0; color: #6b7280;">
+      Drag and drop a document here, or click to browse
+    </p>
+  </div>
+  <input type="file" id="fileInput" style="display: none" accept=".pdf,.docx,.pptx,.xlsx,.html,.csv,.json,.xml,.txt,.md" />
+
+  <div id="error"></div>
+  <div id="status"></div>
+
+  <div id="result">
+    <span class="badge" id="formatBadge">markdown</span>
+    <div id="metadata"></div>
+    <pre id="markdownOutput"></pre>
+  </div>
+
+  <script type="module">
+    import { createMarkItDown } from "markitdownjs";
+
+    const md = createMarkItDown();
+    const dropzone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput");
+    const resultDiv = document.getElementById("result");
+    const markdownOutput = document.getElementById("markdownOutput");
+    const formatBadge = document.getElementById("formatBadge");
+    const metadataDiv = document.getElementById("metadata");
+    const statusDiv = document.getElementById("status");
+    const errorDiv = document.getElementById("error");
+
+    function setStatus(msg) { statusDiv.textContent = msg; }
+    function setError(msg) {
+      errorDiv.textContent = msg;
+      errorDiv.style.display = msg ? "block" : "none";
+    }
+    function showResult(result, fileName) {
+      resultDiv.classList.add("visible");
+      markdownOutput.textContent = result.markdown;
+      formatBadge.textContent = result.converterId;
+      const meta = result.metadata;
+      const parts = [];
+      if (fileName) parts.push(`File: ${fileName}`);
+      if (meta.title) parts.push(`Title: ${meta.title}`);
+      if (meta.author) parts.push(`Author: ${meta.author}`);
+      if (meta.wordCount != null) parts.push(`Words: ${meta.wordCount.toLocaleString()}`);
+      if (result.chunks?.length) parts.push(`Chunks: ${result.chunks.length}`);
+      metadataDiv.textContent = parts.join("  ·  ");
+      metadataDiv.style.cssText = "font-size: 0.8rem; color: #6b7280; margin-bottom: 0.75rem;";
+    }
+
+    async function handleFile(file) {
+      setError("");
+      setStatus(`Converting ${file.name}...`);
+      dropzone.classList.add("has-file");
+
+      try {
+        const result = await md.convert(file);
+        setStatus(`Converted in ${(result.stats.duration / 1000).toFixed(1)}s`);
+        showResult(result, file.name);
+      } catch (err) {
+        setError(`Error: ${err.message}`);
+        setStatus("");
+      }
+    }
+
+    dropzone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropzone.classList.add("dragover");
+    });
+    dropzone.addEventListener("dragleave", () => {
+      dropzone.classList.remove("dragover");
+    });
+    dropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (file) handleFile(file);
+    });
+  </script>
+</body>
+</html>

@@ -1,7 +1,14 @@
 import type { AnyNode, DocumentChunk } from "@markitdownjs/shared";
 
 /** Content type classification for chunks */
-export type ContentType = "narrative" | "table" | "code" | "list" | "callout" | "heading-only" | "mixed";
+export type ContentType =
+  | "narrative"
+  | "table"
+  | "code"
+  | "list"
+  | "callout"
+  | "heading-only"
+  | "mixed";
 
 /**
  * Classify a chunk's content type based on its AST children.
