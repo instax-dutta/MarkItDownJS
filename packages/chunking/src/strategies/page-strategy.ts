@@ -1,7 +1,7 @@
 import type { AnyNode, DocumentChunk, ChunkingOptions, PageBreakNode } from "@markitdownjs/shared";
-import { walkAst, isNodeOfType, countTokens } from "@markitdownjs/shared";
+import { isNodeOfType, countTokens } from "@markitdownjs/shared";
 import type { ChunkingStrategy } from "../chunker.js";
-import { createChunk } from "../chunker.js";
+import { collectBlocks, createChunk } from "../chunker.js";
 
 const DEFAULT_MAX_TOKENS = 512;
 
@@ -33,12 +33,12 @@ export class PageChunkingStrategy implements ChunkingStrategy {
       startIndex = globalOffset;
     };
 
-    walkAst(ast, (node, _parent) => {
+    for (const node of collectBlocks(ast)) {
       if (isNodeOfType<PageBreakNode>(node, "page-break")) {
         hasPageBreaks = true;
         flushChunk(currentPage);
         currentPage = node.pageNumber;
-        return;
+        continue;
       }
 
       currentNodes.push(node);
@@ -48,7 +48,7 @@ export class PageChunkingStrategy implements ChunkingStrategy {
       if (tokens > 0 && countTokensArray(currentNodes) >= maxTokens) {
         flushChunk(currentPage);
       }
-    });
+    }
 
     flushChunk(currentPage);
 

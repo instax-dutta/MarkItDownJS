@@ -1,7 +1,7 @@
 import type { AnyNode, DocumentChunk, ChunkingOptions, HeadingNode } from "@markitdownjs/shared";
 import { getNodeText, isNodeOfType } from "@markitdownjs/shared";
 import type { ChunkingStrategy } from "../chunker.js";
-import { createChunk } from "../chunker.js";
+import { collectBlocks, createChunk } from "../chunker.js";
 
 const DEFAULT_MAX_TOKENS = 512;
 
@@ -72,39 +72,26 @@ export class HeadingChunkingStrategy implements ChunkingStrategy {
       startIndex = globalOffset;
     };
 
-    walk(ast, null);
-
-    flushChunk();
-
-    return chunks;
-
-    function walk(node: AnyNode, parent: AnyNode | null): void {
+    for (const node of collectBlocks(ast)) {
       if (isNodeOfType<HeadingNode>(node, "heading")) {
         flushChunk();
         headingPath.length = node.level - 1;
         headingPath[node.level - 1] = getNodeText(node);
-      }
-
-      if ("children" in node && Array.isArray(node.children)) {
-        for (const child of node.children) {
-          walk(child, node);
-        }
+        continue;
       }
 
       const nodeTokens = countTokens(getNodeText(node));
-      if (
-        node.type !== "heading" &&
-        node.type !== "document" &&
-        !(parent && isNodeOfType<HeadingNode>(parent, "heading"))
-      ) {
-        currentNodes.push(node);
-        globalOffset += nodeTokens;
-      }
+      currentNodes.push(node);
+      globalOffset += nodeTokens;
 
       if (nodeTokens > 0 && countNodesTokens(currentNodes, countTokens) >= maxTokens) {
         flushChunk();
       }
     }
+
+    flushChunk();
+
+    return chunks;
   }
 }
 

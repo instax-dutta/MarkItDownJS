@@ -18,6 +18,9 @@ export class FixedChunkingStrategy implements ChunkingStrategy {
   chunk(ast: AnyNode, options: ChunkingOptions): DocumentChunk[] {
     const maxTokens = options.maxTokens ?? DEFAULT_MAX_TOKENS;
     const overlap = options.overlap ?? DEFAULT_OVERLAP;
+    // Clamp overlap below maxTokens so each iteration makes forward progress
+    // (overlap >= maxTokens would otherwise stall or loop forever).
+    const safeOverlap = Math.max(0, Math.min(overlap, Math.max(1, maxTokens) - 1));
 
     const text = getNodeText(ast);
     const words = text.split(/\s+/).filter(Boolean);
@@ -53,7 +56,7 @@ export class FixedChunkingStrategy implements ChunkingStrategy {
       chunks.push(chunk);
 
       globalOffset += tokenCount;
-      startIdx = endIdx - overlap;
+      startIdx = endIdx - safeOverlap;
 
       if (startIdx >= endIdx) break;
       if (startIdx >= words.length) break;

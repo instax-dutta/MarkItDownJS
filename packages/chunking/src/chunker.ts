@@ -63,6 +63,51 @@ export function createChunk(
   return { id: metadata.chunkId, content, metadata, ast: root };
 }
 
+const BLOCK_TYPES: ReadonlySet<AnyNode["type"]> = new Set([
+  "heading",
+  "paragraph",
+  "table",
+  "list",
+  "code",
+  "blockquote",
+  "thematic-break",
+  "horizontal-rule",
+  "page-break",
+]);
+
+const UNWRAP_TYPES: ReadonlySet<AnyNode["type"]> = new Set(["document", "section"]);
+
+/**
+ * Collect each semantic block node exactly once.
+ *
+ * `document` and `section` containers are unwrapped (their children are
+ * visited), each semantic block (heading, paragraph, table, list, code,
+ * blockquote, rule, page break) is emitted once, and inline descendants are
+ * never emitted independently. This prevents container + text duplication.
+ */
+export function collectBlocks(root: AnyNode): AnyNode[] {
+  const blocks: AnyNode[] = [];
+
+  const visit = (node: AnyNode): void => {
+    if (UNWRAP_TYPES.has(node.type)) {
+      for (const child of node.children ?? []) visit(child);
+      return;
+    }
+    if (BLOCK_TYPES.has(node.type)) {
+      blocks.push(node);
+      return;
+    }
+    // Other containers (e.g. quote/callout) may hold nested blocks; inline
+    // nodes have no children and simply contribute nothing.
+    if ("children" in node && Array.isArray(node.children)) {
+      for (const child of node.children) visit(child);
+    }
+  };
+
+  visit(root);
+  return blocks;
+}
+
 /** Main document chunker that delegates to registered strategies */
 export class DocumentChunker {
   private strategies: Map<string, ChunkingStrategy>;

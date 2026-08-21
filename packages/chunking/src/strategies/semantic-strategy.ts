@@ -5,9 +5,9 @@ import type {
   HeadingNode,
   ParagraphNode,
 } from "@markitdownjs/shared";
-import { walkAst, getNodeText, isNodeOfType, countTokens } from "@markitdownjs/shared";
+import { getNodeText, isNodeOfType, countTokens } from "@markitdownjs/shared";
 import type { ChunkingStrategy } from "../chunker.js";
-import { createChunk } from "../chunker.js";
+import { collectBlocks, createChunk } from "../chunker.js";
 
 const DEFAULT_MAX_TOKENS = 512;
 const DEFAULT_OVERLAP = 50;
@@ -19,22 +19,7 @@ export class SemanticChunkingStrategy implements ChunkingStrategy {
   chunk(ast: AnyNode, options: ChunkingOptions): DocumentChunk[] {
     const maxTokens = options.maxTokens ?? DEFAULT_MAX_TOKENS;
     const overlap = options.overlap ?? DEFAULT_OVERLAP;
-    const nodes: AnyNode[] = [];
-
-    walkAst(ast, (node, _parent) => {
-      if (
-        node.type === "paragraph" ||
-        node.type === "heading" ||
-        node.type === "list" ||
-        node.type === "table" ||
-        node.type === "code" ||
-        node.type === "blockquote" ||
-        node.type === "thematic-break" ||
-        node.type === "horizontal-rule"
-      ) {
-        nodes.push(node);
-      }
-    });
+    const nodes: AnyNode[] = collectBlocks(ast).filter((node) => node.type !== "page-break");
 
     if (nodes.length === 0) return [];
 
