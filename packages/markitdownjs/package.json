@@ -34,8 +34,7 @@
     "document-conversion",
     "markdown",
     "markitdownjs",
-    "typescript",
-    "all-in-one"
+    "typescript"
   ],
   "publishConfig": {
     "access": "public"
