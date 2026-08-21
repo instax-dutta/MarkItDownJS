@@ -1,13 +1,15 @@
 import { useState, useCallback, useRef, type DragEvent, type ChangeEvent } from "react";
-import type { ConversionResult } from "@markitdownjs/shared";
+import type { ChunkingOptions, ConversionResult } from "@markitdownjs/shared";
 import { useDocumentParser } from "./hooks.js";
 
 export interface DocumentDropzoneProps {
-  onConvert: (result: ConversionResult) => void;
+  onConvert: (file: File, result: ConversionResult) => void;
   onError?: (error: Error) => void;
   accept?: string[];
   disabled?: boolean;
   className?: string;
+  /** Chunking configuration forwarded to the parser for RAG workflows. */
+  chunking?: ChunkingOptions;
 }
 
 export function DocumentDropzone({
@@ -16,6 +18,7 @@ export function DocumentDropzone({
   accept = [".pdf", ".docx", ".pptx", ".xlsx", ".html", ".csv", ".json", ".xml", ".txt", ".md"],
   disabled = false,
   className = "",
+  chunking,
 }: DocumentDropzoneProps) {
   const { convert, isConverting, progress, error } = useDocumentParser();
   const [isDragOver, setIsDragOver] = useState(false);
@@ -24,14 +27,14 @@ export function DocumentDropzone({
   const handleFile = useCallback(
     async (file: File) => {
       try {
-        const result = await convert(file);
-        onConvert(result);
+        const result = await convert(file, { chunking });
+        onConvert(file, result);
       } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
         onError?.(e);
       }
     },
-    [convert, onConvert, onError]
+    [convert, onConvert, onError, chunking]
   );
 
   const handleDragOver = useCallback(

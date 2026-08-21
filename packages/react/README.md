@@ -16,47 +16,59 @@ npm install react react-dom  # peer dependencies
 
 ## Usage
 
+### Share a configured parser across your app
+
+```tsx
+import { MarkItDownProvider } from "@markitdownjs/react";
+import { MarkItDown } from "@markitdownjs/core";
+import { JsonConverter } from "@markitdownjs/json";
+
+const parser = new MarkItDown();
+parser.registerConverter(new JsonConverter());
+
+<MarkItDownProvider parser={parser}>
+  <App />
+</MarkItDownProvider>;
+```
+
+### Hooks
+
 ```tsx
 import { useDocumentParser } from "@markitdownjs/react";
 
 function UploadPage() {
-  const { convert, result, loading, error } = useDocumentParser();
+  const { convert, result, isConverting, error } = useDocumentParser(parser);
 
-  return (
-    <input
-      type="file"
-      onChange={(e) => convert(e.target.files![0])}
-    />
-  );
+  return <input type="file" onChange={(e) => convert(e.target.files![0])} />;
 }
 ```
 
+Hooks accept an optional parser argument. When omitted, they create and cache a
+single parser instance internally rather than constructing a new one per file.
+
 ## API
 
-### `useDocumentParser(options?)`
+### `MarkItDownProvider`
 
-Returns `{ convert, result, loading, error, reset }`.
+Props: `{ children, parser?, converters? }`. Wrap your app to share a single
+configured parser across hooks.
 
-### `useMarkdownConversion(source, mimeType)`
+### `useMarkItDown()`
 
-Returns `{ markdown, loading, error }` — converts a source directly to a Markdown string.
+Returns `{ convert, convertToMarkdown, convertToJson }` backed by the provider's
+parser.
 
-### `useDocumentChunks(source, mimeType, options?)`
+### `useDocumentParser(parser?)`
 
-Returns `{ chunks, loading, error }` — splits the converted document into chunked nodes, useful for RAG pipelines.
+Returns `{ convert, result, isConverting, error, progress, reset }`.
 
-### `DocumentProvider`
+### `useMarkdownConversion(parser?)`
 
-Context provider. Wrap your app to share a single `MarkItDown` instance and registered converters across all hooks.
+Returns `{ markdown, isConverting, error, convertToMarkdown, convertToJson }`.
 
-```tsx
-import { DocumentProvider } from "@markitdownjs/react";
-import { JsonConverter } from "@markitdownjs/json";
+### Components
 
-<DocumentProvider converters={[new JsonConverter()]}>
-  <App />
-</DocumentProvider>
-```
+`DocumentDropzone`, `DocumentPreview`, `MarkdownViewer`, `ConversionProgress`.
 
 ## Part of the MarkItDownJS Monorepo
 

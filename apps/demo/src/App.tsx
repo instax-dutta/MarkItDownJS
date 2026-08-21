@@ -4,23 +4,23 @@ import {
   MarkdownViewer,
 } from "@markitdownjs/react";
 import type { ConversionResult } from "@markitdownjs/shared";
-import { ChunkVisualizer } from "./components/ChunkVisualizer.js";
-import { FormatBadge } from "./components/FormatBadge.js";
+import { ChunkVisualizer } from "./components/ChunkVisualizer";
+import { FormatBadge } from "./components/FormatBadge";
 
 type ViewMode = "rendered" | "source";
 
 function App() {
   const [result, setResult] = useState<ConversionResult | null>(null);
   const [fileName, setFileName] = useState<string>("");
-  const [isConverting, setIsConverting] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("rendered");
   const [copied, setCopied] = useState(false);
   const [showChunks, setShowChunks] = useState(false);
 
-  const handleConvert = useCallback((conversionResult: ConversionResult) => {
+  const handleConvert = useCallback((file: File, conversionResult: ConversionResult) => {
     setResult(conversionResult);
+    setFileName(file.name);
     setError(null);
     setShowChunks(false);
   }, []);
@@ -71,12 +71,13 @@ function App() {
       </header>
 
       <main className="app-main">
-        {!result && !isConverting && (
+        {!result && (
           <section className="drop-section">
             <DocumentDropzone
               onConvert={handleConvert}
               onError={handleError}
               className="dropzone"
+              chunking={{ enabled: true, strategy: "heading" }}
             />
             {error && <div className="error-message">{error}</div>}
           </section>

@@ -19,6 +19,17 @@ Transform PDFs, DOCX, PPTX, XLSX, HTML, EPUB, CSV, JSON, XML, images, audio, and
 
 ---
 
+## Demo
+
+Drag, drop, and convert — the browser demo in action. Drop a `.docx`, get clean
+Markdown, and inspect RAG-ready chunks:
+
+![MarkItDownJS demo — drop a DOCX, convert it to Markdown, and inspect RAG chunks](demo-video/demo.gif)
+
+Run it yourself: [`apps/demo`](./apps/demo) · Full-quality video: [`demo-video/demo.mp4`](demo-video/demo.mp4)
+
+---
+
 ## Quick Start
 
 ```bash

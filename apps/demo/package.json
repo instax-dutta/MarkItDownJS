@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
@@ -13,7 +13,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@markitdownjs/react": "workspace:*",
-    "@markitdownjs/shared": "workspace:*"
+    "@markitdownjs/shared": "workspace:*",
+    "@markitdownjs/all": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
