@@ -26,7 +26,7 @@ Markdown, and inspect RAG-ready chunks:
 
 ![MarkItDownJS demo — drop a DOCX, convert it to Markdown, and inspect RAG chunks](demo-video/demo.gif)
 
-Run it yourself: [`apps/demo`](./apps/demo) · Full-quality video: [`demo-video/demo.mp4`](demo-video/demo.mp4)
+Run it yourself: [`apps/demo`](./apps/demo)
 
 ---
 
