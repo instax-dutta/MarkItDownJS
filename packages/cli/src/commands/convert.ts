@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { dirname } from "path";
 import { MarkItDown } from "@markitdownjs/core";
+import { HtmlRenderer, PlainTextRenderer } from "@markitdownjs/ast";
 
 export function registerConvertCommand(program: Command): void {
   program
@@ -35,10 +36,10 @@ export function registerConvertCommand(program: Command): void {
               output = JSON.stringify(result, null, 2);
               break;
             case "plaintext":
-              output = result.markdown;
+              output = result.ast ? new PlainTextRenderer().render(result.ast) : result.markdown;
               break;
             case "html":
-              output = result.markdown;
+              output = result.ast ? new HtmlRenderer().render(result.ast) : result.markdown;
               break;
             case "markdown":
             default:

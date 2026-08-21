@@ -23,6 +23,7 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
+    "@markitdownjs/ast": "workspace:*",
     "@markitdownjs/core": "workspace:*",
     "@markitdownjs/shared": "workspace:*",
     "commander": "^12.0.0"
