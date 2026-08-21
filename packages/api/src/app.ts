@@ -1,43 +1,60 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { getSupportedExtensions, getSupportedMimeTypes } from "@markitdownjs/shared";
+import type { MarkItDown } from "@markitdownjs/core";
 
-const app = new Hono();
+export interface CreateAppOptions {
+  /** Configured MarkItDown parser used by the /convert route. */
+  parser?: MarkItDown;
+}
 
-app.use("/*", cors());
+export function createApp(options: CreateAppOptions = {}): Hono {
+  const app = new Hono();
+  const parser = options.parser;
 
-app.get("/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }));
+  app.use("/*", cors());
 
-app.get("/formats", async (c) => {
-  return c.json({
-    extensions: getSupportedExtensions(),
-    mimeTypes: getSupportedMimeTypes(),
-  });
-});
+  app.get("/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }));
 
-app.post("/convert", async (c) => {
-  try {
-    const body = await c.req.parseBody();
-    const file = body["file"];
-
-    if (!file || !(file instanceof File)) {
-      return c.json({ error: "No file provided" }, 400);
-    }
-
-    const { MarkItDown } = await import("@markitdownjs/core");
-    const parser = new MarkItDown();
-
-    const arrayBuffer = await file.arrayBuffer();
-    const result = await parser.convert({
-      data: new Uint8Array(arrayBuffer),
-      fileName: file.name,
-      mimeType: file.type || undefined,
+  app.get("/formats", async (c) => {
+    return c.json({
+      extensions: getSupportedExtensions(),
+      mimeTypes: getSupportedMimeTypes(),
     });
+  });
 
-    return c.json(result);
-  } catch (error) {
-    return c.json({ error: error instanceof Error ? error.message : "Conversion failed" }, 500);
-  }
-});
+  app.post("/convert", async (c) => {
+    try {
+      if (!parser) {
+        return c.json(
+          {
+            error: "No parser configured. Pass a MarkItDown instance via createApp({ parser }).",
+          },
+          500
+        );
+      }
 
-export default app;
+      const body = await c.req.parseBody();
+      const file = body["file"];
+
+      if (!file || !(file instanceof File)) {
+        return c.json({ error: "No file provided" }, 400);
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await parser.convert({
+        data: new Uint8Array(arrayBuffer),
+        fileName: file.name,
+        mimeType: file.type || undefined,
+      });
+
+      return c.json(result);
+    } catch (error) {
+      return c.json({ error: error instanceof Error ? error.message : "Conversion failed" }, 500);
+    }
+  });
+
+  return app;
+}
+
+export default createApp();

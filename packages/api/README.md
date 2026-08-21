@@ -15,8 +15,13 @@ npm install @markitdownjs/api @markitdownjs/core
 
 ```ts
 import { startServer } from "@markitdownjs/api";
+import { MarkItDown } from "@markitdownjs/core";
+import { PdfConverter } from "@markitdownjs/pdf";
 
-startServer({ port: 3000 });
+const parser = new MarkItDown();
+parser.registerConverter(new PdfConverter());
+
+startServer({ parser, port: 3000 });
 ```
 
 ### Embed in an existing Hono or Node app
@@ -33,27 +38,25 @@ const app = createApp({ parser });
 // Mount `app` into your existing Hono/Express instance
 ```
 
+Without a parser, `/convert` returns a clear configuration error rather than an
+empty-registry failure.
+
 ## Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/convert` | Convert a single file (`multipart/form-data`, field: `file`) |
-| `POST` | `/batch` | Convert multiple files in one request |
 | `GET` | `/health` | Health check — returns `{ status: "ok" }` |
-| `GET` | `/formats` | List registered converter MIME types |
-
-## Docker
-
-```bash
-npx @markitdownjs/cli serve --port 3000
-```
+| `GET` | `/formats` | List supported extensions and MIME types |
 
 ## API
 
 | Export | Description |
 |--------|-------------|
-| `createApp(opts)` | Returns a configured Hono app instance |
-| `startServer(opts)` | Creates the app and starts a Node.js HTTP listener |
+| `createApp({ parser? })` | Returns a configured Hono app instance |
+| `startServer({ parser?, port? })` | Creates the app and starts a Node.js HTTP listener |
+| `rateLimit(options?)` | Rate-limiting middleware |
+| `validateFileSize` | File-size validation middleware |
 
 ## Part of the MarkItDownJS Monorepo
 
