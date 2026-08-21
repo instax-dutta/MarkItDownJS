@@ -392,30 +392,31 @@ export class PptxConverter implements Converter {
    */
   private extractTables(slideDoc: Document): TableNode[] {
     const tables: TableNode[] = [];
-    const tblElements = slideDoc.getElementsByTagName("p:tbl");
+    const tblElements = slideDoc.getElementsByTagName("a:tbl");
 
     for (let t = 0; t < tblElements.length; t++) {
       const tbl = tblElements.item(t);
       if (!tbl) continue;
 
       const rows: TableRowNode[] = [];
-      const trs = tbl.getElementsByTagName("p:tr");
+      const trs = tbl.getElementsByTagName("a:tr");
 
       for (let i = 0; i < trs.length; i++) {
         const tr = trs.item(i);
         if (!tr) continue;
 
         const cells: TableCellNode[] = [];
-        const tcs = tr.getElementsByTagName("p:tc");
+        const tcs = tr.getElementsByTagName("a:tc");
 
         for (let j = 0; j < tcs.length; j++) {
           const tc = tcs.item(j);
           if (!tc) continue;
 
           let colspan: number | undefined;
-          const gridSpan = tc.getElementsByTagName("a:gridSpan")[0];
-          if (gridSpan) {
-            const val = parseInt(gridSpan.getAttribute("val") ?? "1", 10);
+          // In DrawingML tables gridSpan is an attribute on <a:tc>, not a child element.
+          const gridSpanVal = tc.getAttribute("gridSpan");
+          if (gridSpanVal) {
+            const val = parseInt(gridSpanVal, 10);
             if (val > 1) colspan = val;
           }
 
