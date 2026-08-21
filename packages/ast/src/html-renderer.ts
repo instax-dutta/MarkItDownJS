@@ -33,6 +33,30 @@ function escapeHtml(text: string): string {
     .replace(/'/g, "&#39;");
 }
 
+/**
+ * Returns true when a URL is safe to render in an href/src attribute.
+ *
+ * Relative and protocol-relative URLs, plus `http`, `https`, and `mailto`
+ * schemes are allowed. When `allowDataImage` is set (image sources), a
+ * `data:image/*` URL is also allowed. Executable schemes such as
+ * `javascript:` and `vbscript:` are rejected.
+ */
+function isSafeUrl(url: string, allowDataImage = false): boolean {
+  const trimmed = url.trim();
+
+  // Control characters can be used to smuggle an executable scheme.
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001f\u007f]/.test(trimmed)) return false;
+
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) return true;
+
+  const scheme = trimmed.slice(0, trimmed.indexOf(":")).toLowerCase();
+  if (scheme === "http" || scheme === "https" || scheme === "mailto") return true;
+  if (allowDataImage && scheme === "data" && /^data:image\//i.test(trimmed)) return true;
+
+  return false;
+}
+
 export class HtmlRenderer {
   render(node: AnyNode): string {
     switch (node.type) {
@@ -43,7 +67,7 @@ export class HtmlRenderer {
       case "heading": {
         const heading = node as HeadingNode;
         const tag = `h${heading.level}`;
-        const id = heading.id ? ` id="${heading.id}"` : "";
+        const id = heading.id ? ` id="${escapeHtml(heading.id)}"` : "";
         const children = heading.children.map((c) => this.render(c)).join("");
         return `<${tag}${id}>${children}</${tag}>`;
       }
@@ -76,11 +100,16 @@ export class HtmlRenderer {
       case "link": {
         const link = node as LinkNode;
         const children = link.children.map((c) => this.render(c)).join("");
+        if (!isSafeUrl(link.href)) {
+          // Render the link text inert, without an executable href.
+          return children;
+        }
         const title = link.title ? ` title="${escapeHtml(link.title)}"` : "";
         return `<a href="${escapeHtml(link.href)}"${title}>${children}</a>`;
       }
       case "image": {
         const image = node as ImageNode;
+        if (!isSafeUrl(image.src, true)) return "";
         const alt = image.alt ? ` alt="${escapeHtml(image.alt)}"` : "";
         const title = image.title ? ` title="${escapeHtml(image.title)}"` : "";
         return `<img src="${escapeHtml(image.src)}"${alt}${title} />`;

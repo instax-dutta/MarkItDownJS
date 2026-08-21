@@ -4,7 +4,14 @@ import { HtmlRenderer } from "../html-renderer.js";
 import { PlainTextRenderer } from "../plaintext-renderer.js";
 import { JsonRenderer } from "../json-renderer.js";
 import { createNode } from "@markitdownjs/shared";
-import type { DocumentNode, HeadingNode, ParagraphNode, TextNode } from "@markitdownjs/shared";
+import type {
+  DocumentNode,
+  HeadingNode,
+  ImageNode,
+  LinkNode,
+  ParagraphNode,
+  TextNode,
+} from "@markitdownjs/shared";
 
 const testAst = createNode<DocumentNode>({
   type: "document",
@@ -55,5 +62,94 @@ describe("JsonRenderer", () => {
     const json = renderer.render(testAst);
     const parsed = JSON.parse(json);
     expect(parsed.type).toBe("document");
+  });
+});
+
+describe("HtmlRenderer safety", () => {
+  it("escapes heading id attributes", () => {
+    const renderer = new HtmlRenderer();
+    const doc = createNode<DocumentNode>({
+      type: "document",
+      children: [
+        createNode<HeadingNode>({
+          type: "heading",
+          level: 2,
+          id: 'a"b<c',
+          children: [createNode<TextNode>({ type: "text", value: "Title" })],
+        }),
+      ],
+    });
+
+    const html = renderer.render(doc);
+    expect(html).toContain('id="a&quot;b&lt;c"');
+    expect(html).not.toContain('id="a"b<c"');
+  });
+
+  it("renders javascript: link URLs inert", () => {
+    const renderer = new HtmlRenderer();
+    const doc = createNode<DocumentNode>({
+      type: "document",
+      children: [
+        createNode<ParagraphNode>({
+          type: "paragraph",
+          children: [
+            createNode<LinkNode>({
+              type: "link",
+              href: "javascript:alert(1)",
+              children: [createNode<TextNode>({ type: "text", value: "click" })],
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const html = renderer.render(doc);
+    expect(html).not.toContain("javascript:");
+    expect(html).toContain("click");
+  });
+
+  it("renders javascript: image URLs inert", () => {
+    const renderer = new HtmlRenderer();
+    const doc = createNode<DocumentNode>({
+      type: "document",
+      children: [
+        createNode<ParagraphNode>({
+          type: "paragraph",
+          children: [
+            createNode<ImageNode>({
+              type: "image",
+              src: "javascript:alert(1)",
+              alt: "x",
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const html = renderer.render(doc);
+    expect(html).not.toContain("javascript:");
+  });
+
+  it("still renders safe http(s) links", () => {
+    const renderer = new HtmlRenderer();
+    const doc = createNode<DocumentNode>({
+      type: "document",
+      children: [
+        createNode<ParagraphNode>({
+          type: "paragraph",
+          children: [
+            createNode<LinkNode>({
+              type: "link",
+              href: "https://example.com",
+              children: [createNode<TextNode>({ type: "text", value: "site" })],
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const html = renderer.render(doc);
+    expect(html).toContain('href="https://example.com"');
+    expect(html).toContain("site");
   });
 });
