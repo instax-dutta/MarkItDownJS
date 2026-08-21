@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@markitdownjs/next)](https://www.npmjs.com/package/@markitdownjs/next)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Next.js integration for [MarkItDownJS](https://github.com/markitdownjs/markitdownjs). Provides Server Actions, Route Handlers, and streaming upload support.
+Next.js integration for [MarkItDownJS](https://github.com/markitdownjs/markitdownjs). Provides Server Actions, Route Handlers, and upload helpers.
 
 **Peer dependency:** `next >= 14.0.0`
 
@@ -15,45 +15,53 @@ npm install @markitdownjs/next @markitdownjs/core
 
 ## Usage
 
-### Route Handler (App Router)
+Each conversion helper requires a configured `MarkItDown` parser. Pass one in explicitly — the helpers never construct an empty parser on their own.
+
+### Route Handler factory (App Router)
 
 ```ts
 // app/api/convert/route.ts
-import { createConvertRouteHandler } from "@markitdownjs/next";
+import { createConvertRoute } from "@markitdownjs/next";
 import { MarkItDown } from "@markitdownjs/core";
 import { PdfConverter } from "@markitdownjs/pdf";
 
 const parser = new MarkItDown();
 parser.registerConverter(new PdfConverter());
 
-export const POST = createConvertRouteHandler({ parser });
+export const POST = createConvertRoute({ parser });
+```
+
+### Direct route helpers
+
+```ts
+import { convertRoute, batchRoute, formatsRoute } from "@markitdownjs/next";
+
+export async function POST(request: Request) {
+  return convertRoute(request, parser);
+}
 ```
 
 ### Server Action
 
 ```ts
 "use server";
-import { createConvertServerAction } from "@markitdownjs/next";
-import { MarkItDown } from "@markitdownjs/core";
+import { convertDocumentAction } from "@markitdownjs/next";
 
-const parser = new MarkItDown();
-export const convertDocument = createConvertServerAction({ parser });
-```
-
-### Upload Handler
-
-```ts
-import { createUploadHandler } from "@markitdownjs/next";
-export const POST = createUploadHandler({ parser, maxSizeMb: 20 });
+export async function convertDocument(formData: FormData) {
+  return convertDocumentAction(formData, parser);
+}
 ```
 
 ## API
 
 | Export | Description |
 |--------|-------------|
-| `createConvertRouteHandler(opts)` | Returns a Next.js `POST` handler for `multipart/form-data` uploads |
-| `createConvertServerAction(opts)` | Returns a Server Action accepting a `File` or `FormData` |
-| `createUploadHandler(opts)` | Returns a handler with size limits and streaming support |
+| `createConvertRoute({ parser, maxFileSize?, allowedTypes?, onConvert? })` | Returns a Next.js `POST` handler for `multipart/form-data` uploads |
+| `convertRoute(request, parser?)` | Converts a single file; returns a clear error when `parser` is omitted |
+| `batchRoute(request, parser?)` | Converts multiple files in one request |
+| `formatsRoute()` | Lists supported extensions and MIME types |
+| `convertDocumentAction(formData, parser?)` | Server Action converting a `FormData` file |
+| `handleFileUpload`, `validateFile` | Upload validation helpers |
 
 ## Part of the MarkItDownJS Monorepo
 

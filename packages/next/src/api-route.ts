@@ -1,10 +1,16 @@
-interface CreateConvertRouteOptions {
+import type { MarkItDownParser } from "./types.js";
+
+export interface CreateConvertRouteOptions {
+  /** Configured parser used for conversion. */
+  parser: MarkItDownParser;
   maxFileSize?: number;
   allowedTypes?: string[];
   onConvert?: (result: unknown) => void;
 }
 
-export function createConvertRoute(options: CreateConvertRouteOptions = {}) {
+export function createConvertRoute(options: CreateConvertRouteOptions) {
+  const { parser, maxFileSize, allowedTypes, onConvert } = options;
+
   return async function POST(request: Request) {
     try {
       const formData = await request.formData();
@@ -14,21 +20,19 @@ export function createConvertRoute(options: CreateConvertRouteOptions = {}) {
         return Response.json({ error: "No file provided" }, { status: 400 });
       }
 
-      if (options.maxFileSize && file.size > options.maxFileSize) {
+      if (maxFileSize && file.size > maxFileSize) {
         return Response.json({ error: "File too large" }, { status: 413 });
       }
 
-      if (options.allowedTypes && options.allowedTypes.length > 0) {
+      if (allowedTypes && allowedTypes.length > 0) {
         const ext = file.name.split(".").pop()?.toLowerCase();
-        if (!ext || !options.allowedTypes.includes(ext)) {
+        if (!ext || !allowedTypes.includes(ext)) {
           return Response.json({ error: "File type not allowed" }, { status: 415 });
         }
       }
 
-      const { MarkItDown } = await import("@markitdownjs/core");
-      const parser = new MarkItDown();
       const result = await parser.convert(file);
-      options.onConvert?.(result);
+      onConvert?.(result);
       return Response.json(result);
     } catch (error) {
       return Response.json(

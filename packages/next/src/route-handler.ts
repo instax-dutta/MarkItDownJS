@@ -1,5 +1,10 @@
 import type { ConversionResult } from "@markitdownjs/shared";
 import { getSupportedExtensions, getSupportedMimeTypes } from "@markitdownjs/shared";
+import type { MarkItDownParser } from "./types.js";
+
+const NO_PARSER_ERROR = Object.freeze({
+  error: "No parser configured. Pass a MarkItDown instance to convert.",
+});
 
 export async function formatsRoute() {
   const extensions = getSupportedExtensions();
@@ -7,8 +12,12 @@ export async function formatsRoute() {
   return Response.json({ extensions, mimeTypes });
 }
 
-export async function convertRoute(request: Request) {
+export async function convertRoute(request: Request, parser?: MarkItDownParser) {
   try {
+    if (!parser) {
+      return Response.json(NO_PARSER_ERROR, { status: 500 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
@@ -16,8 +25,6 @@ export async function convertRoute(request: Request) {
       return Response.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const { MarkItDown } = await import("@markitdownjs/core");
-    const parser = new MarkItDown();
     const result = await parser.convert(file);
     return Response.json(result);
   } catch (error) {
@@ -28,8 +35,12 @@ export async function convertRoute(request: Request) {
   }
 }
 
-export async function batchRoute(request: Request) {
+export async function batchRoute(request: Request, parser?: MarkItDownParser) {
   try {
+    if (!parser) {
+      return Response.json(NO_PARSER_ERROR, { status: 500 });
+    }
+
     const formData = await request.formData();
     const entries = Array.from(formData.entries());
     const files = entries.filter((entry): entry is [string, File] => entry[1] instanceof File);
@@ -37,9 +48,6 @@ export async function batchRoute(request: Request) {
     if (files.length === 0) {
       return Response.json({ error: "No files provided" }, { status: 400 });
     }
-
-    const { MarkItDown } = await import("@markitdownjs/core");
-    const parser = new MarkItDown();
 
     const results = await Promise.allSettled(
       files.map(async ([name, file]) => {
