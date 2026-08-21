@@ -1,2 +1,9 @@
-export { pack, unpack } from "./pack.js";
-export type { PackBundle, PackManifest, PackOptions, PackCompression } from "./types.js";
+export { pack, unpack, PackError } from "./pack.js";
+export type {
+  PackBundle,
+  PackManifest,
+  PackOptions,
+  PackCompression,
+  PackedChunk,
+  PackedData,
+} from "./types.js";

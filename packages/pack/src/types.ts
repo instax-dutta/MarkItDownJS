@@ -1,3 +1,5 @@
+import type { AnyNode, ChunkMetadata } from "@markitdownjs/shared";
+
 /** Compression type for the pack payload */
 export type PackCompression = "none" | "gzip" | "brotli";
 
@@ -15,7 +17,7 @@ export interface PackManifest {
 
 /** Configuration for packing */
 export interface PackOptions {
-  /** Compression algorithm (default: "none") */
+  /** Compression algorithm (default: "none"). gzip/brotli are not yet supported. */
   compression?: PackCompression;
   /** Include the full AST in the bundle (default: false for smaller payload) */
   includeAst?: boolean;
@@ -31,8 +33,24 @@ export interface PackBundle {
   format: "markitdownjs-pack-v1";
   /** Manifest with summary stats */
   manifest: PackManifest;
-  /** Base64-encoded compressed payload */
+  /** Base64-encoded payload */
   payload: string;
   /** Embedded metadata */
   metadata?: Record<string, unknown>;
+}
+
+/** A single packed document chunk */
+export interface PackedChunk {
+  id: string;
+  content: string;
+  metadata: ChunkMetadata;
+  ast?: AnyNode;
+}
+
+/** Typed data restored by unpack() */
+export interface PackedData {
+  markdown: string;
+  chunks: PackedChunk[];
+  metadata: Record<string, unknown>;
+  ast?: AnyNode;
 }

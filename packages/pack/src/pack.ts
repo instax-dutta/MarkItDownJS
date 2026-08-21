@@ -1,15 +1,69 @@
-import type { ConversionResult } from "@markitdownjs/shared";
-import type { PackBundle, PackManifest, PackOptions } from "./types.js";
+import type { AnyNode, ConversionResult } from "@markitdownjs/shared";
+import type { PackBundle, PackManifest, PackOptions, PackedData, PackedChunk } from "./types.js";
+
+/** Package-specific error for invalid bundles or unsupported options. */
+export class PackError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PackError";
+  }
+}
+
+const PACK_FORMAT = "markitdownjs-pack-v1";
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder("utf-8", { fatal: true });
+
+function encodeUtf8(text: string): Uint8Array {
+  return encoder.encode(text);
+}
+
+function decodeUtf8(bytes: Uint8Array): string {
+  try {
+    return decoder.decode(bytes);
+  } catch {
+    throw new PackError("Invalid UTF-8 payload");
+  }
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  let binary: string;
+  try {
+    binary = atob(base64);
+  } catch {
+    throw new PackError("Invalid base64 payload");
+  }
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
 
 /**
  * Pack a ConversionResult into a portable bundle.
- * The bundle contains compressed chunks and metadata that can be restored anywhere.
+ * The bundle contains chunks and metadata that can be restored anywhere.
  */
 export async function pack(
   result: ConversionResult,
   options: PackOptions = {}
 ): Promise<PackBundle> {
-  const { includeAst = false, includeChunks = true, metadata } = options;
+  const { includeAst = false, includeChunks = true, metadata, compression = "none" } = options;
+
+  if (compression !== "none") {
+    throw new PackError(
+      `Unsupported compression: "${compression}". Only "none" is currently supported.`
+    );
+  }
 
   const chunks = result.chunks ?? [];
 
@@ -29,11 +83,9 @@ export async function pack(
   payloadData.markdown = result.markdown;
   payloadData.metadata = result.metadata;
 
-  // Serialize to JSON.
+  // Serialize to JSON and encode as UTF-8 → base64.
   const json = JSON.stringify(payloadData);
-
-  // Base64-encode (compression is reserved for future use).
-  const payload = btoa(unescape(encodeURIComponent(json)));
+  const payload = bytesToBase64(encodeUtf8(json));
 
   // Compute manifest.
   const totalTokens = chunks.reduce((sum, c) => sum + (c.metadata.tokenCount ?? 0), 0);
@@ -50,7 +102,7 @@ export async function pack(
   manifest.fingerprint = `djb2:${Math.abs(hash).toString(16).padStart(8, "0")}`;
 
   return {
-    format: "markitdownjs-pack-v1",
+    format: PACK_FORMAT,
     manifest,
     payload,
     metadata,
@@ -58,22 +110,31 @@ export async function pack(
 }
 
 /**
- * Unpack a PackBundle back into a ConversionResult-like object.
+ * Unpack a PackBundle back into typed packed data.
  */
-export function unpack(bundle: PackBundle): {
-  markdown: string;
-  chunks: any[];
-  metadata: Record<string, unknown>;
-  ast?: any;
-} {
-  // Decode base64 payload.
-  const json = decodeURIComponent(escape(atob(bundle.payload)));
-  const data = JSON.parse(json);
+export function unpack(bundle: PackBundle): PackedData {
+  if (bundle.format !== PACK_FORMAT) {
+    throw new PackError(`Unknown pack format: "${String(bundle.format)}"`);
+  }
+
+  const bytes = base64ToBytes(bundle.payload);
+
+  let data: Record<string, unknown>;
+  try {
+    data = JSON.parse(decodeUtf8(bytes)) as Record<string, unknown>;
+  } catch (error) {
+    if (error instanceof PackError) throw error;
+    throw new PackError(
+      `Invalid JSON payload: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  const chunks = (data.chunks ?? []) as PackedChunk[];
 
   return {
-    markdown: data.markdown ?? "",
-    chunks: data.chunks ?? [],
-    metadata: data.metadata ?? {},
-    ast: data.ast,
+    markdown: typeof data.markdown === "string" ? data.markdown : "",
+    chunks,
+    metadata: (data.metadata ?? {}) as Record<string, unknown>,
+    ast: data.ast as AnyNode | undefined,
   };
 }
