@@ -23,7 +23,8 @@ import { ArchiveConverter } from "@markitdownjs/archive";
  * import { createMarkItDown } from "@markitdownjs/all";
  *
  * const md = createMarkItDown();
- * const result = await md.convert("document.pdf");
+ * // Pass file bytes with a filename (or a File/Blob), not a path string.
+ * const result = await md.convert({ data: fileBytes, fileName: "document.pdf" });
  * console.log(result.markdown);
  * ```
  */

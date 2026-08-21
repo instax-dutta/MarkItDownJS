@@ -7,7 +7,7 @@
     "start": "tsx index.ts"
   },
   "dependencies": {
-    "markitdownjs": "latest"
+    "@markitdownjs/markitdownjs": "latest"
   },
   "devDependencies": {
     "tsx": "^4.0.0",

@@ -9,7 +9,8 @@
  * import { MarkItDown, createMarkItDown } from "@markitdownjs/markitdownjs";
  *
  * const md = createMarkItDown();
- * const result = await md.convert("report.docx");
+ * // Pass file bytes with a filename (or a File/Blob), not a path string.
+ * const result = await md.convert({ data: fileBytes, fileName: "report.docx" });
  * console.log(result.markdown);
  * ```
  */

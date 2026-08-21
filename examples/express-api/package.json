@@ -7,7 +7,7 @@
     "start": "tsx server.ts"
   },
   "dependencies": {
-    "markitdownjs": "latest",
+    "@markitdownjs/markitdownjs": "latest",
     "hono": "^4.0.0",
     "@hono/node-server": "^4.0.0"
   },

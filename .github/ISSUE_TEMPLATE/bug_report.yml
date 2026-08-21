@@ -30,9 +30,14 @@ body:
         - "@markitdownjs/archive"
         - "@markitdownjs/chunking"
         - "@markitdownjs/ast"
+        - "@markitdownjs/pack"
+        - "@markitdownjs/optimizer"
+        - "@markitdownjs/react"
+        - "@markitdownjs/next"
         - "@markitdownjs/cli"
         - "@markitdownjs/api"
-        - markitdownjs
+        - "@markitdownjs/all"
+        - "@markitdownjs/markitdownjs"
         - Other
     validations:
       required: true
@@ -70,9 +75,9 @@ body:
       description: Minimal code example to reproduce the issue
       placeholder: |
         ```ts
-        import { MarkItDown } from "markitdownjs";
+        import { MarkItDown } from "@markitdownjs/core";
         const md = new MarkItDown();
-        const result = await md.convert("...");
+        const result = await md.convert({ data, fileName });
         ```
       render: typescript
     validations:

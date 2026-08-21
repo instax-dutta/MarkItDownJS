@@ -28,7 +28,7 @@ async function main() {
         <p>Useful for fixed-size windows.</p>
 
         <h1>Getting Started</h1>
-        <p>Install via npm: npm install markitdownjs</p>
+        <p>Install via npm: npm install @markitdownjs/markitdownjs</p>
         <p>Import and create an instance.</p>
 
         <h2>Quick Start</h2>

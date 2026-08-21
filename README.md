@@ -42,12 +42,12 @@ import { createMarkItDown } from "@markitdownjs/markitdownjs";
 // Create a fully-configured instance with all converters + chunker
 const md = createMarkItDown();
 
-// Convert a file — auto-detects format by extension
-const result = await md.convert("report.pdf");
+// Convert file bytes — auto-detects format by magic bytes / extension
+const result = await md.convert({ data: pdfBytes, fileName: "report.pdf" });
 console.log(result.markdown);
 
-// Works with buffers too — auto-detects by magic bytes
-const result2 = await md.convert(pdfBuffer);
+// Works with plain bytes too — auto-detects by magic bytes
+const result2 = await md.convert(pdfBytes);
 console.log(result2.markdown);
 ```
 
@@ -66,7 +66,7 @@ const md = new MarkItDown();
 md.registerConverter(new PdfConverter());
 md.registerConverter(new DocxConverter());
 
-const result = await md.convert("report.docx");
+const result = await md.convert({ data: docxBytes, fileName: "report.docx" });
 console.log(result.markdown);
 ```
 
@@ -87,7 +87,7 @@ console.log(result.markdown);
 | **React / Next.js** | ✅ Hooks, components, API routes | — | — | — |
 | **CLI** | ✅ Convert, watch, batch, serve | ✅ Basic | — | ✅ Basic |
 | **HTTP API** | ✅ Hono server | — | — | — |
-| **Packaging** | 20 modular packages | 1 package | 1 package | 1 package |
+| **Packaging** | 24 modular packages | 1 package | 1 package | 1 package |
 | **Language** | TypeScript (strict) | TypeScript | JavaScript | TypeScript |
 | **Runtime** | Node.js, Bun, Deno, Browser | Node.js | Node.js | Node.js |
 | **License** | MIT | MIT | MIT | MIT |
@@ -204,7 +204,7 @@ function UploadPage() {
 
   return (
     <div>
-      <DocumentDropzone onConvert={(r) => console.log(r.markdown)} />
+      <DocumentDropzone onConvert={(file, result) => console.log(file.name, result.markdown)} />
       {result && <pre>{result.markdown}</pre>}
     </div>
   );
@@ -217,14 +217,6 @@ function UploadPage() {
 
 ```typescript
 // app/api/convert/route.ts
-import { createConvertRoute } from "@markitdownjs/next";
-
-export const POST = createConvertRoute();
-```
-
-Or with a custom parser:
-
-```typescript
 import { createConvertRoute } from "@markitdownjs/next";
 import { createMarkItDown } from "@markitdownjs/markitdownjs";
 
@@ -287,7 +279,7 @@ Chunks [ { chunkId, content, headingPath, pageNumber, tokenCount, contentType } 
 - **AST-first** — every converter produces a structured `DocumentNode` AST, not raw text. Renderers are swappable.
 - **Plugin-based** — `registerConverter()`, `registerRenderer()`, `registerChunker()`. Core never imports converter packages directly.
 - **Zero Python** — pure TypeScript, runs natively in Node.js, Bun, Deno, Electron, and browsers (where supported).
-- **20 packages, one pipeline** — format-specific packages, a shared AST, and a core orchestrator. Install only what you need.
+- **24 packages, one pipeline** — format-specific packages, a shared AST, and a core orchestrator. Install only what you need.
 
 ---
 
