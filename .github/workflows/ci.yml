@@ -73,13 +73,17 @@ jobs:
       - run: pnpm build
       - name: Verify all packages built
         run: |
-          for pkg in shared core ast chunking pdf docx pptx xlsx html csv json xml image-ocr audio epub archive react next cli api; do
+          for pkg in shared core ast chunking pdf docx pptx xlsx html csv json xml image-ocr audio epub archive react next cli api pack optimizer all markitdownjs; do
             if [ ! -d "packages/$pkg/dist" ]; then
               echo "Missing dist for packages/$pkg"
               exit 1
             fi
           done
           echo "All packages built successfully"
+      - name: Typecheck and build demo app
+        run: |
+          pnpm --filter demo typecheck
+          pnpm --filter demo build
 
   security:
     name: Security Audit
@@ -94,4 +98,3 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Run npm audit
         run: pnpm audit --audit-level=high
-        continue-on-error: true
