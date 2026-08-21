@@ -290,5 +290,72 @@ describe("MarkItDown", () => {
         await expect(md.convert(buf)).rejects.toThrow("No converter found");
       }
     });
+
+    it("should convert a raw ArrayBuffer by detecting its MIME from magic bytes", async () => {
+      const md = new MarkItDown();
+      const pdfConverter: Converter = {
+        id: "pdf-arraybuffer",
+        supportedMimeTypes: ["application/pdf"],
+        supportedExtensions: [".pdf"],
+        async canConvert(input: ConversionInput): Promise<boolean> {
+          return input.mimeType === "application/pdf";
+        },
+        async convert(_input: ConversionInput): Promise<ConversionResult> {
+          return {
+            markdown: "PDF from ArrayBuffer",
+            metadata: {},
+            assets: [],
+            tables: [],
+            images: [],
+            headings: [],
+            format: "markdown",
+            converterId: "pdf-arraybuffer",
+            stats: { startTime: 0, endTime: 0, duration: 0, inputSize: 0, outputSize: 0 },
+          };
+        },
+      };
+      md.registerConverter(pdfConverter);
+
+      // PDF magic bytes: %PDF
+      const bytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x61, 0x62, 0x63]);
+      const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+
+      const result = await md.convert(buffer);
+      expect(result.markdown).toBe("PDF from ArrayBuffer");
+    });
+
+    it("should preserve the MIME type of a typed Blob", async () => {
+      const md = new MarkItDown();
+      md.registerConverter(createMockConverter("blob"));
+
+      const blob = new Blob(["hello"], { type: "text/plain" });
+      const result = await md.convert(blob);
+      expect(result.converterId).toBe("blob");
+      expect(result.markdown).toBe("# Hello\n\nWorld");
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // chunking gate
+  // -----------------------------------------------------------------------
+
+  describe("chunking gate", () => {
+    it("should not chunk when chunking.enabled is false", async () => {
+      const md = new MarkItDown();
+      md.registerConverter(createMockConverter("test"));
+
+      const chunker = createMockChunker();
+      const chunkSpy = vi.spyOn(chunker, "chunk");
+      md.registerChunker(chunker);
+
+      const result = await md.convert({
+        data: "hello",
+        mimeType: "text/plain",
+        options: { chunking: { enabled: false, strategy: "heading" } },
+      });
+
+      expect(chunkSpy).not.toHaveBeenCalled();
+      expect(result.chunks).toBeUndefined();
+    });
   });
 });

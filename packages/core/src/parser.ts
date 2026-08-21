@@ -98,34 +98,37 @@ export class MarkItDown {
   }
 
   async convert(
-    input: ConversionInput | File | Blob | Uint8Array | string
+    input: ConversionInput | File | Blob | Uint8Array | ArrayBuffer | string
   ): Promise<ConversionResult> {
     const normalizedInput = this.normalizeInput(input);
     const result = await this.pipeline.convert(normalizedInput);
 
     // Auto-chunk if a chunker is registered and chunking options are provided.
-    if (this.chunker && result.ast && normalizedInput.options?.chunking) {
-      result.chunks = this.chunker.chunk(result.ast, normalizedInput.options.chunking);
+    const chunking = normalizedInput.options?.chunking;
+    if (this.chunker && result.ast && chunking && chunking.enabled !== false) {
+      result.chunks = this.chunker.chunk(result.ast, chunking);
     }
 
     return result;
   }
 
   async convertToMarkdown(
-    input: ConversionInput | File | Blob | Uint8Array | string
+    input: ConversionInput | File | Blob | Uint8Array | ArrayBuffer | string
   ): Promise<string> {
     const result = await this.convert(input);
     return result.markdown;
   }
 
-  async convertToJson(input: ConversionInput | File | Blob | Uint8Array | string): Promise<string> {
+  async convertToJson(
+    input: ConversionInput | File | Blob | Uint8Array | ArrayBuffer | string
+  ): Promise<string> {
     const result = await this.convert(input);
     const renderer = this.customRenderer ?? this.renderer;
     return renderer.render(result, "json");
   }
 
   private normalizeInput(
-    input: ConversionInput | File | Blob | Uint8Array | string
+    input: ConversionInput | File | Blob | Uint8Array | ArrayBuffer | string
   ): ConversionInput {
     if (typeof input === "string") {
       // Extract fileName from the path for extension-based MIME detection
@@ -137,6 +140,11 @@ export class MarkItDown {
       const mimeType = detectMimeTypeFromData(input);
       return { data: input, mimeType };
     }
+    if (input instanceof ArrayBuffer) {
+      const bytes = new Uint8Array(input);
+      const mimeType = detectMimeTypeFromData(bytes);
+      return { data: bytes, mimeType };
+    }
     if (typeof File !== "undefined" && input instanceof File) {
       return {
         data: input,
@@ -145,7 +153,7 @@ export class MarkItDown {
       };
     }
     if (typeof Blob !== "undefined" && input instanceof Blob) {
-      return { data: input };
+      return { data: input, mimeType: input.type || undefined };
     }
     return input as ConversionInput;
   }

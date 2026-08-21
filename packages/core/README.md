@@ -26,7 +26,7 @@ import { PdfConverter } from "@markitdownjs/pdf";
 const parser = new MarkItDown();
 parser.registerConverter(new PdfConverter());
 
-const result = await parser.convert({ source: fileBuffer, mimeType: "application/pdf" });
+const result = await parser.convert({ data: fileBytes, mimeType: "application/pdf" });
 console.log(result.markdown);
 ```
 
@@ -45,10 +45,10 @@ console.log(result.markdown);
 ## Options
 
 ```ts
-const parser = new MarkItDown({
-  includeMetadata: true,
-  assetBasePath: "./assets",
-});
+const parser = new MarkItDown({ registry: myRegistry });
+
+// Or auto-register all installed converter packages:
+const all = await MarkItDown.create({ preset: "all" });
 ```
 
 ## Result Shape
@@ -56,8 +56,17 @@ const parser = new MarkItDown({
 ```ts
 interface ConversionResult {
   markdown: string;
-  ast: DocumentNode;
-  metadata: Record<string, unknown>;
+  metadata: DocumentMetadata;
+  assets: AssetInfo[];
+  tables: TableData[];
+  images: ImageInfo[];
+  headings: HeadingInfo[];
+  ast?: AnyNode;
+  format: OutputFormat;
+  converterId: string;
+  stats: ConversionStats;
+  chunks?: DocumentChunk[];
+  warnings?: ConversionWarning[];
 }
 ```
 
