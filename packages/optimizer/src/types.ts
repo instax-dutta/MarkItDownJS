@@ -1,11 +1,11 @@
-import type { AnyNode, DocumentNode } from "@markitdownjs/shared";
+import type { AnyNode } from "@markitdownjs/shared";
 
 /** An optimizer rule that transforms an AST to reduce noise */
 export interface OptimizerRule {
   /** Human-readable rule name */
   name: string;
-  /** Returns true if this rule should be applied to the given AST */
-  applies: (node: DocumentNode) => boolean;
+  /** Returns true if this rule should be applied to the given node */
+  applies: (node: AnyNode) => boolean;
   /** Transform the AST node. Return null to remove the node, or the transformed node. */
   transform: (node: AnyNode) => AnyNode | null;
 }

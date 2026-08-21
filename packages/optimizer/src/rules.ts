@@ -3,9 +3,12 @@ import type {
   ImageNode,
   ListNode,
   ListItemNode,
+  TableNode,
+  TableRowNode,
   TextNode,
   HtmlNode,
 } from "@markitdownjs/shared";
+import { getNodeText } from "@markitdownjs/shared";
 import type { OptimizerRule } from "./types.js";
 
 /** Regex for decorative/tracking image patterns */
@@ -31,14 +34,37 @@ export const stripDecorativeImages: OptimizerRule = {
   },
 };
 
-/** Collapse repeated table headers (CSV/XLSX with repeated header rows) */
+/**
+ * Collapse consecutive duplicate table header rows (CSV/XLSX with repeated
+ * header rows). The first header row is preserved; immediately following
+ * header rows with identical cell text are removed.
+ */
 export const collapseRepeatedHeaders: OptimizerRule = {
   name: "collapse-repeated-headers",
-  applies: () => true,
+  applies: (node: AnyNode) => node.type === "table",
   transform: (node: AnyNode): AnyNode | null => {
-    // This is a placeholder — actual implementation needs table row comparison.
-    // The optimizer applies this at the table level in a post-processing step.
-    return node;
+    if (node.type !== "table") return node;
+    const table = node as TableNode;
+    const rows = table.children;
+
+    const result: TableRowNode[] = [];
+    let lastHeaderText: string | null = null;
+
+    for (const row of rows) {
+      if (row.isHeader) {
+        const text = row.children.map((cell) => getNodeText(cell)).join("\u0000");
+        if (lastHeaderText !== null && text === lastHeaderText) {
+          continue; // consecutive duplicate header row
+        }
+        lastHeaderText = text;
+      } else {
+        lastHeaderText = null;
+      }
+      result.push(row);
+    }
+
+    if (result.length === rows.length) return node;
+    return { ...table, children: result };
   },
 };
 

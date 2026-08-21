@@ -51,7 +51,7 @@ export class Optimizer {
   /**
    * Apply a single rule to the entire AST tree.
    */
-  private applyRule(node: AnyNode, rule: OptimizerRule): AnyNode {
+  private applyRule(node: AnyNode, rule: OptimizerRule): AnyNode | null {
     if ("children" in node && Array.isArray(node.children)) {
       const children: AnyNode[] = [];
       for (const child of node.children) {
@@ -63,10 +63,9 @@ export class Optimizer {
       node = { ...node, children };
     }
 
-    // Apply rule to the current node.
-    if (rule.applies(node as DocumentNode)) {
-      const result = rule.transform(node);
-      return result ?? node;
+    // Apply rule to the current node. A null return removes the node.
+    if (rule.applies(node)) {
+      return rule.transform(node);
     }
 
     return node;
